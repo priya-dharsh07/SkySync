@@ -1,0 +1,6 @@
+Remove-Item -Recurse -Force .\app
+Get-ChildItem -Path . -Filter page.tsx -Recurse
+Remove-Item -Recurse -Force .next
+
+To seed 200 realistic flight records into db
+Invoke-WebRequest -Uri http://localhost:3000/api/flights/seed -Method POST
