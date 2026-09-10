@@ -3,182 +3,129 @@
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  CalendarDays,
-  ChevronDown,
-  MapPin,
-  Search,
-  Users,
+  ShieldCheck,
+  Compass,
+  Lock,
+  RotateCcw,
+  Sparkles,
 } from "lucide-react";
 
-export default function Hero() {
+export default function Hero({ onExploreClick }: { onExploreClick?: () => void }) {
   return (
-    <section className="relative min-h-[780px] overflow-hidden bg-[#081126]">
-
-      {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute -right-40 -top-40 h-[600px] w-[600px] rounded-full bg-blue-600/20 blur-[120px]" />
-        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-indigo-600/20 blur-[120px]" />
-      </div>
-
-      {/* Decorative grid */}
-      <div
-        className="absolute inset-0 opacity-[0.08]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-        }}
-      />
-
-      <div className="relative mx-auto max-w-7xl px-6 pb-24 pt-40 lg:px-8">
-
-        <div className="max-w-4xl">
-
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-[#F8FAFC] to-[#F1F5F9] pt-28 pb-16 lg:pt-36 lg:pb-20 border-b border-slate-200/80">
+      <div className="relative mx-auto max-w-6xl px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          {/* Subtle SaaS Pill */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm text-blue-200 backdrop-blur"
+            transition={{ duration: 0.4 }}
+            className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50/80 px-3.5 py-1 text-xs font-semibold text-purple-800 shadow-sm backdrop-blur-sm"
           >
-            <span className="h-2 w-2 rounded-full bg-blue-400" />
-            Intelligent flight booking
+            <Sparkles size={12} className="text-purple-600" />
+            <span>Multi-Origin Global Convergence</span>
+            <span className="text-purple-300">•</span>
+            <span className="text-purple-700">Atomic Saga Engine</span>
           </motion.div>
 
+          {/* Heading */}
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="max-w-4xl text-5xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-8xl"
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mt-6 text-4xl font-extrabold tracking-tight text-[#021024] sm:text-5xl lg:text-6xl leading-[1.12]"
           >
-            Travel further.
-            <br />
-            <span className="text-blue-400">Sync everything.</span>
+            Distributed Travel. <br />
+            <span className="text-[#052659]">Synchronous Group Booking.</span>
           </motion.h1>
 
+          {/* Subheading */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-7 max-w-2xl text-lg leading-8 text-slate-300"
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-5 text-sm leading-relaxed text-slate-600 sm:text-base max-w-2xl mx-auto"
           >
-            Search flights, coordinate groups, choose seats and manage your
-            entire journey through one intelligent travel experience.
+            Traditional booking platforms fail when groups travel from different cities. SkySync executes a{" "}
+            <strong className="text-[#021024] font-semibold">Pareto multi-objective algorithm</strong> to discover the fairest meeting hubs, backed by a{" "}
+            <strong className="text-[#021024] font-semibold">distributed Transactional Saga Orchestrator</strong> that automatically voids all charges if any seat fails.
           </motion.p>
 
+          {/* Action CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mt-8 flex flex-wrap items-center justify-center gap-3"
+          >
+            <button
+              type="button"
+              onClick={onExploreClick}
+              className="flex items-center gap-2 rounded-xl bg-[#052659] px-6 py-3 text-xs font-bold text-white transition hover:bg-[#021024] shadow-sm"
+            >
+              <Compass size={15} />
+              <span>Launch Multi-Origin Search</span>
+              <ArrowRight size={14} />
+            </button>
+
+            <a
+              href="#engine-architecture"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            >
+              <Lock size={14} className="text-slate-500" />
+              <span>Saga Architecture</span>
+            </a>
+          </motion.div>
+
+          {/* Feature Metric Pillars */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-12 grid grid-cols-2 gap-3 text-left sm:grid-cols-4"
+          >
+            {/* Pareto: Purple */}
+            <div className="rounded-xl border border-purple-100 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-1.5 text-purple-600">
+                <Sparkles size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Pareto Frontier</span>
+              </div>
+              <p className="mt-1.5 text-base font-bold text-[#021024]">3-Objective</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Minimizes Gini price disparity and arrival window gap.</p>
+            </div>
+
+            {/* Atomic: Emerald */}
+            <div className="rounded-xl border border-emerald-100 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-1.5 text-emerald-600">
+                <ShieldCheck size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Atomic Guarantee</span>
+              </div>
+              <p className="mt-1.5 text-base font-bold text-[#021024]">100% or 0%</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">All members confirm together or everyone voids cleanly.</p>
+            </div>
+
+            {/* Locks: Amber */}
+            <div className="rounded-xl border border-amber-100 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-1.5 text-amber-600">
+                <Lock size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Redis Redlock</span>
+              </div>
+              <p className="mt-1.5 text-base font-bold text-[#021024]">TTL Locks</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Holds seats synchronously while all members authenticate.</p>
+            </div>
+
+            {/* Rollback: Coral */}
+            <div className="rounded-xl border border-rose-100 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-1.5 text-rose-600">
+                <RotateCcw size={14} />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Compensating</span>
+              </div>
+              <p className="mt-1.5 text-base font-bold text-[#021024]">Zero Liability</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Automatic rollback voids all escrow holds instantly.</p>
+            </div>
+          </motion.div>
         </div>
-
-        {/* Search card */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
-          className="mt-14 rounded-[28px] border border-white/10 bg-white/[0.96] p-4 shadow-2xl shadow-black/30 backdrop-blur-xl"
-        >
-
-          {/* Trip type */}
-          <div className="flex gap-2 border-b border-gray-100 px-2 pb-4">
-            <button className="rounded-full bg-[#355CFF] px-5 py-2 text-sm font-semibold text-white">
-              Round trip
-            </button>
-
-            <button className="rounded-full px-5 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-100">
-              One way
-            </button>
-
-            <button className="rounded-full px-5 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-100">
-              Multi-city
-            </button>
-          </div>
-
-          {/* Search fields */}
-          <div className="grid gap-3 pt-4 lg:grid-cols-[1fr_auto_1fr_1fr_1fr_auto]">
-
-            <SearchField
-              icon={<MapPin size={18} />}
-              label="From"
-              value="Chennai (MAA)"
-            />
-
-            <button className="my-auto hidden h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-[#355CFF] shadow-sm lg:flex">
-              ⇄
-            </button>
-
-            <SearchField
-              icon={<MapPin size={18} />}
-              label="To"
-              value="Singapore (SIN)"
-            />
-
-            <SearchField
-              icon={<CalendarDays size={18} />}
-              label="Departure"
-              value="24 Aug 2026"
-            />
-
-            <SearchField
-              icon={<Users size={18} />}
-              label="Travellers"
-              value="2 Travellers"
-            />
-
-            <button className="flex h-[62px] items-center justify-center gap-2 rounded-2xl bg-[#355CFF] px-7 font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-[#2447DF]">
-              <Search size={19} />
-              Search
-            </button>
-
-          </div>
-        </motion.div>
-
-        {/* Stats */}
-        <div className="mt-10 flex flex-wrap gap-8 text-sm text-slate-400">
-          <div>
-            <span className="font-bold text-white">500+</span> destinations
-          </div>
-
-          <div>
-            <span className="font-bold text-white">10,000+</span> flights
-          </div>
-
-          <div>
-            <span className="font-bold text-white">24/7</span> travel support
-          </div>
-        </div>
-
       </div>
     </section>
-  );
-}
-
-function SearchField({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <button className="group flex h-[62px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 text-left transition hover:border-blue-300 hover:shadow-sm">
-
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#355CFF]">
-        {icon}
-      </div>
-
-      <div className="min-w-0">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-          {label}
-        </div>
-
-        <div className="mt-1 truncate text-sm font-bold text-gray-900">
-          {value}
-        </div>
-      </div>
-
-      <ChevronDown
-        size={16}
-        className="ml-auto text-gray-400"
-      />
-    </button>
   );
 }

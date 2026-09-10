@@ -1,40 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ArrowLeft,
-  Check,
-  Info,
-  Plane,
-  Users,
-} from "lucide-react";
+import { ArrowLeft, Check, Plane, Users, Info } from "lucide-react";
 import Link from "next/link";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 
-type SeatStatus =
-  | "available"
-  | "selected"
-  | "occupied"
-  | "premium";
-
-type Seat = {
-  id: string;
-  row: number;
-  column: string;
-  status: SeatStatus;
-};
+type SeatStatus = "available" | "selected" | "occupied" | "premium";
 
 const columns = ["A", "B", "C", "D", "E", "F"];
-
 const occupiedSeats = ["1C", "2A", "3F", "5B", "6E", "8A", "10F"];
-
 const premiumRows = [1, 2, 3];
 
 export default function SelectSeatsPage() {
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(["2B", "2C"]);
 
   const toggleSeat = (seatId: string) => {
     if (occupiedSeats.includes(seatId)) return;
-
     setSelected((current) =>
       current.includes(seatId)
         ? current.filter((id) => id !== seatId)
@@ -43,272 +25,168 @@ export default function SelectSeatsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb]">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
+      <Navbar />
 
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
-
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-
+      <main className="mx-auto max-w-6xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+        {/* Navigation back */}
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
           <Link
             href="/flights"
-            className="flex items-center gap-2 text-sm font-semibold text-gray-600"
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#052659] transition"
           >
-            <ArrowLeft size={18} />
-            Back to flights
+            <ArrowLeft size={14} /> Back to Flights
           </Link>
 
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#355CFF] text-white">
-              <Plane size={18} />
-            </div>
-
-            <span className="font-extrabold">
-              Sky<span className="text-[#355CFF]">Sync</span>
-            </span>
+          {/* Progress Indicator */}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-400">Flight</span>
+            <span className="text-slate-300">→</span>
+            <span className="text-slate-400">Passengers</span>
+            <span className="text-slate-300">→</span>
+            <span className="font-bold text-[#052659]">Seats (Active)</span>
+            <span className="text-slate-300">→</span>
+            <span className="text-slate-400">Payment</span>
           </div>
-
         </div>
 
-      </header>
-
-      {/* Progress */}
-      <div className="border-b border-gray-200 bg-white">
-
-        <div className="mx-auto flex max-w-5xl items-center justify-center gap-3 px-6 py-5">
-
-          <Step number="1" title="Flight" done />
-          <Line />
-          <Step number="2" title="Passengers" done />
-          <Line />
-          <Step number="3" title="Seats" active />
-          <Line />
-          <Step number="4" title="Payment" />
-
+        {/* Page Title */}
+        <div className="mt-6">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Step 03 of 04</span>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#021024]">Select Your Aircraft Seats</h1>
+          <p className="text-xs text-slate-500">SkySync locks seats with distributed Redis holds while you complete checkout.</p>
         </div>
 
-      </div>
-
-      <div className="mx-auto max-w-7xl px-6 py-10">
-
-        <div className="mb-10">
-          <p className="text-sm font-bold uppercase tracking-widest text-[#355CFF]">
-            Step 03
-          </p>
-
-          <h1 className="mt-2 text-4xl font-extrabold tracking-tight">
-            Choose your seats
-          </h1>
-
-          <p className="mt-3 text-gray-500">
-            Select seats for all travellers. SkySync will keep your group
-            together whenever possible.
-          </p>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-
-          {/* Aircraft */}
-          <section className="rounded-[32px] border border-gray-200 bg-white p-6 shadow-sm lg:p-10">
-
-            {/* Aircraft heading */}
-            <div className="mb-10 flex items-center justify-between">
-
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
+          {/* Aircraft Fuselage Layout */}
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-3.5">
               <div>
-                <h2 className="font-bold text-gray-950">
-                  SkySync Airways
-                </h2>
-
-                <p className="text-sm text-gray-500">
-                  SS 204 · Airbus A321neo
-                </p>
+                <h2 className="text-sm font-bold text-[#021024]">SkySync Airways • Airbus A321neo</h2>
+                <p className="text-[11px] text-slate-500">Standard 2-2 Layout</p>
               </div>
-
-              <div className="rounded-xl bg-blue-50 px-4 py-2 text-sm font-semibold text-[#355CFF]">
-                MAA → SIN
-              </div>
-
+              <span className="rounded-md bg-slate-100 px-2.5 py-1 font-mono text-xs font-bold text-[#052659] border border-slate-200">
+                SS 204
+              </span>
             </div>
 
-            {/* Cockpit */}
-            <div className="mx-auto max-w-[520px]">
-
-              <div className="mb-8 rounded-t-[120px] border border-gray-200 bg-gray-50 py-7 text-center">
-                <Plane className="mx-auto mb-2 rotate-90 text-gray-400" size={24} />
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                  Front
-                </span>
+            {/* Fuselage Container */}
+            <div className="mx-auto max-w-[460px] rounded-2xl border border-slate-200 bg-slate-50/70 p-6 shadow-inner">
+              {/* Nose Cockpit */}
+              <div className="mb-6 rounded-t-[80px] border border-slate-200 bg-white py-4 text-center shadow-xs">
+                <Plane className="mx-auto mb-1 rotate-90 text-slate-400" size={18} />
+                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400">Cockpit Front</span>
               </div>
 
-              {/* Business */}
-              <CabinTitle title="Business" />
-
-              <div className="mb-10 space-y-2">
-                {premiumRows.map((row) => (
-                  <SeatRow
-                    key={row}
-                    row={row}
-                    selected={selected}
-                    toggleSeat={toggleSeat}
-                  />
-                ))}
+              {/* Business Cabin */}
+              <div className="mb-5">
+                <div className="mb-2.5 flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700">Business Class</span>
+                  <div className="h-px flex-1 bg-purple-200" />
+                </div>
+                <div className="space-y-2">
+                  {premiumRows.map((row) => (
+                    <SeatRow key={row} row={row} selected={selected} toggleSeat={toggleSeat} />
+                  ))}
+                </div>
               </div>
 
-              {/* Economy */}
-              <CabinTitle title="Economy" />
-
-              <div className="space-y-2">
-                {Array.from({ length: 15 }, (_, index) => index + 4).map(
-                  (row) => (
-                    <SeatRow
-                      key={row}
-                      row={row}
-                      selected={selected}
-                      toggleSeat={toggleSeat}
-                    />
-                  )
-                )}
+              {/* Economy Cabin */}
+              <div className="mt-6">
+                <div className="mb-2.5 flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Economy Class</span>
+                  <div className="h-px flex-1 bg-slate-200" />
+                </div>
+                <div className="space-y-2">
+                  {[4, 5, 6, 7, 8, 9, 10].map((row) => (
+                    <SeatRow key={row} row={row} selected={selected} toggleSeat={toggleSeat} />
+                  ))}
+                </div>
               </div>
-
-              {/* Rear */}
-              <div className="mt-8 rounded-b-[60px] border border-gray-200 bg-gray-50 py-5 text-center text-xs font-bold uppercase tracking-widest text-gray-400">
-                Rear galley
-              </div>
-
             </div>
 
-            {/* Legend */}
-            <div className="mt-10 flex flex-wrap justify-center gap-6 border-t border-gray-100 pt-8 text-sm text-gray-500">
-
-              <Legend type="available" text="Available" />
-              <Legend type="selected" text="Selected" />
-              <Legend type="occupied" text="Occupied" />
-              <Legend type="premium" text="Premium" />
-
+            {/* Seat Map Legend */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-4 border-t border-slate-100 pt-4 text-xs text-slate-600">
+              <div className="flex items-center gap-1.5">
+                <span className="h-3.5 w-3.5 rounded border border-slate-200 bg-white shadow-2xs" />
+                <span>Available</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="h-3.5 w-3.5 rounded bg-emerald-600 text-white" />
+                <span>Selected</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="h-3.5 w-3.5 rounded bg-slate-200 text-slate-400" />
+                <span>Occupied</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="h-3.5 w-3.5 rounded border border-purple-300 bg-purple-50 text-purple-700" />
+                <span>Premium</span>
+              </div>
             </div>
-
           </section>
 
-          {/* Summary */}
-          <aside>
-
-            <div className="sticky top-6 space-y-5">
-
-              <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-
-                <div className="mb-6 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#355CFF]">
-                    <Users size={20} />
-                  </div>
-
-                  <div>
-                    <h2 className="font-bold">
-                      Travellers
-                    </h2>
-
-                    <p className="text-sm text-gray-500">
-                      2 passengers
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-
-                  <Passenger
-                    name="Priya Sharma"
-                    seat={selected[0]}
-                  />
-
-                  <Passenger
-                    name="Rahul Sharma"
-                    seat={selected[1]}
-                  />
-
-                </div>
-
+          {/* Booking Summary Sidebar */}
+          <aside className="space-y-4">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <Users size={16} className="text-[#052659]" />
+                <h2 className="text-xs font-bold text-[#021024] uppercase tracking-wider">Seat Summary</h2>
               </div>
 
-              <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-
-                <h2 className="font-bold">
-                  Seat summary
-                </h2>
-
-                <div className="mt-5 space-y-3 text-sm">
-
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">
-                      Seats selected
-                    </span>
-
-                    <span className="font-bold">
-                      {selected.length}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">
-                      Seat fees
-                    </span>
-
-                    <span className="font-bold">
-                      ₹{selected.length * 650}
-                    </span>
-                  </div>
-
+              <div className="mt-4 space-y-2 text-xs">
+                <div className="flex justify-between text-slate-500">
+                  <span>Seats Chosen:</span>
+                  <span className="font-bold text-[#021024]">{selected.length}</span>
                 </div>
-
-                <div className="my-5 border-t border-gray-100" />
-
-                <div className="flex items-end justify-between">
-
-                  <div>
-                    <p className="text-xs text-gray-400">
-                      Total
-                    </p>
-
-                    <p className="text-2xl font-extrabold">
-                      ₹{selected.length * 650}
-                    </p>
-                  </div>
-
-                  <span className="text-xs text-gray-400">
-                    Seat selection
-                  </span>
-
+                <div className="flex justify-between text-slate-500">
+                  <span>Seat Numbers:</span>
+                  <span className="font-mono font-bold text-[#052659]">{selected.join(", ") || "None"}</span>
                 </div>
-
-                <button
-                  disabled={selected.length === 0}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#355CFF] py-4 font-bold text-white shadow-lg shadow-blue-500/20 transition hover:bg-[#2447DF] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Continue
-                  <Check size={18} />
-                </button>
-
-              </div>
-
-              <div className="rounded-2xl bg-blue-50 p-5 text-sm text-blue-800">
-                <div className="flex gap-3">
-                  <Info size={18} className="mt-0.5 shrink-0" />
-
-                  <p>
-                    Seats are temporarily held while you complete the booking.
-                    Later, the SkySync booking engine will protect seats from
-                    double booking.
-                  </p>
+                <div className="flex justify-between text-slate-500">
+                  <span>Seat Reservation Fee:</span>
+                  <span className="font-mono font-bold text-[#021024]">₹{selected.length * 650}</span>
                 </div>
               </div>
 
+              <div className="my-4 border-t border-slate-100" />
+
+              <div className="flex items-end justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">Total Due</span>
+                  <div className="font-mono text-xl font-extrabold text-[#052659]">
+                    ₹{selected.length * 650}
+                  </div>
+                </div>
+                <span className="text-[10px] font-semibold text-amber-700">Held via Redis TTL</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  sessionStorage.setItem("selectedSeats", JSON.stringify(selected));
+                  window.location.href = "/booking/payment";
+                }}
+                disabled={selected.length === 0}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#052659] py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#021024] disabled:opacity-50"
+              >
+                <span>Continue to Payment</span>
+                <Check size={14} />
+              </button>
             </div>
 
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 text-xs text-slate-600 flex gap-2.5">
+              <Info size={16} className="shrink-0 text-[#052659]" />
+              <p className="text-[11px] leading-relaxed">
+                Selected seats are held with a temporary Redis lock. If not confirmed, they automatically release back into inventory.
+              </p>
+            </div>
           </aside>
-
         </div>
+      </main>
 
-      </div>
-
-    </main>
+      <Footer />
+    </div>
   );
 }
 
@@ -322,39 +200,37 @@ function SeatRow({
   toggleSeat: (id: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-[1fr_1fr_35px_1fr_1fr] items-center gap-2">
-
-      {["A", "B"].map((column) => (
-        <Seat
-          key={`${row}${column}`}
-          id={`${row}${column}`}
+    <div className="grid grid-cols-[1fr_1fr_28px_1fr_1fr] items-center gap-2">
+      {["A", "B"].map((col) => (
+        <SeatButton
+          key={`${row}${col}`}
+          id={`${row}${col}`}
           premium={premiumRows.includes(row)}
-          occupied={occupiedSeats.includes(`${row}${column}`)}
-          selected={selected.includes(`${row}${column}`)}
-          onClick={() => toggleSeat(`${row}${column}`)}
+          occupied={occupiedSeats.includes(`${row}${col}`)}
+          selected={selected.includes(`${row}${col}`)}
+          onClick={() => toggleSeat(`${row}${col}`)}
         />
       ))}
 
-      <div className="text-center text-xs font-bold text-gray-300">
+      <div className="text-center font-mono text-[10px] font-bold text-slate-400">
         {row}
       </div>
 
-      {["E", "F"].map((column) => (
-        <Seat
-          key={`${row}${column}`}
-          id={`${row}${column}`}
+      {["E", "F"].map((col) => (
+        <SeatButton
+          key={`${row}${col}`}
+          id={`${row}${col}`}
           premium={premiumRows.includes(row)}
-          occupied={occupiedSeats.includes(`${row}${column}`)}
-          selected={selected.includes(`${row}${column}`)}
-          onClick={() => toggleSeat(`${row}${column}`)}
+          occupied={occupiedSeats.includes(`${row}${col}`)}
+          selected={selected.includes(`${row}${col}`)}
+          onClick={() => toggleSeat(`${row}${col}`)}
         />
       ))}
-
     </div>
   );
 }
 
-function Seat({
+function SeatButton({
   id,
   premium,
   occupied,
@@ -369,124 +245,20 @@ function Seat({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={occupied}
-      className={`
-        relative h-11 rounded-lg border-2 text-xs font-bold transition
-        ${
-          occupied
-            ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-300"
-            : selected
-            ? "border-[#355CFF] bg-[#355CFF] text-white shadow-lg shadow-blue-500/20"
-            : premium
-            ? "border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-400"
-            : "border-gray-200 bg-white text-gray-600 hover:border-[#355CFF] hover:text-[#355CFF]"
-        }
-      `}
+      className={`h-8 rounded-lg text-[11px] font-bold font-mono transition ${
+        occupied
+          ? "cursor-not-allowed bg-slate-200 text-slate-400 border border-slate-300"
+          : selected
+          ? "bg-emerald-600 text-white shadow-xs font-bold"
+          : premium
+          ? "border border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100"
+          : "border border-slate-200 bg-white text-slate-700 shadow-2xs hover:border-[#5483B3] hover:text-[#021024]"
+      }`}
     >
       {id}
     </button>
   );
-}
-
-function CabinTitle({ title }: { title: string }) {
-  return (
-    <div className="mb-3 flex items-center gap-3">
-      <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-        {title}
-      </span>
-
-      <div className="h-px flex-1 bg-gray-100" />
-    </div>
-  );
-}
-
-function Legend({
-  type,
-  text,
-}: {
-  type: "available" | "selected" | "occupied" | "premium";
-  text: string;
-}) {
-  const classes = {
-    available: "border-gray-200 bg-white",
-    selected: "border-[#355CFF] bg-[#355CFF]",
-    occupied: "border-gray-200 bg-gray-100",
-    premium: "border-amber-200 bg-amber-50",
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className={`h-4 w-4 rounded border-2 ${classes[type]}`} />
-      {text}
-    </div>
-  );
-}
-
-function Passenger({
-  name,
-  seat,
-}: {
-  name: string;
-  seat?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between rounded-2xl bg-gray-50 p-4">
-
-      <div>
-        <p className="text-sm font-bold">
-          {name}
-        </p>
-
-        <p className="mt-1 text-xs text-gray-400">
-          Adult passenger
-        </p>
-      </div>
-
-      <div className="rounded-lg bg-white px-3 py-2 text-sm font-bold shadow-sm">
-        {seat || "Select"}
-      </div>
-
-    </div>
-  );
-}
-
-function Step({
-  number,
-  title,
-  active,
-  done,
-}: {
-  number: string;
-  title: string;
-  active?: boolean;
-  done?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-
-      <div
-        className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
-          active || done
-            ? "bg-[#355CFF] text-white"
-            : "bg-gray-100 text-gray-400"
-        }`}
-      >
-        {done ? <Check size={14} /> : number}
-      </div>
-
-      <span
-        className={`hidden text-sm font-semibold sm:block ${
-          active ? "text-gray-900" : "text-gray-400"
-        }`}
-      >
-        {title}
-      </span>
-
-    </div>
-  );
-}
-
-function Line() {
-  return <div className="h-px w-8 bg-gray-200 sm:w-16" />;
 }

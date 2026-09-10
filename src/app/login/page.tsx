@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Lock, Plane } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,20 +17,14 @@ export default function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setError("");
     setLoading(true);
 
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
@@ -49,211 +45,92 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#081126]">
-      <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#021024] flex flex-col justify-between">
+      <Navbar />
 
-        {/* Left visual */}
-        <div className="relative hidden overflow-hidden lg:block">
+      <main className="mx-auto w-full max-w-md px-4 pt-28 pb-16">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#052659] mb-6 transition"
+        >
+          <ArrowLeft size={13} /> Back to SkySync
+        </Link>
 
-          <div className="absolute inset-0 bg-gradient-to-br from-[#173B9C] via-[#081126] to-[#050914]" />
-
-          <div className="relative flex h-full flex-col justify-between p-12">
-
-            {/* Logo */}
-            <Link
-              href="/"
-              className="flex items-center gap-3 text-white"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#355CFF]">
-                <Plane size={20} />
-              </div>
-
-              <span className="text-xl font-bold">
-                SkySync
-              </span>
-            </Link>
-
-            {/* Hero text */}
-            <div className="max-w-lg">
-
-              <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">
-                Your journey starts here
-              </p>
-
-              <h1 className="text-6xl font-extrabold leading-tight text-white">
-                Welcome
-                <br />
-                back.
-              </h1>
-
-              <p className="mt-6 text-lg leading-8 text-slate-300">
-                Sign in to manage your journeys, passengers, saved trips
-                and bookings.
-              </p>
-
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm">
+          {/* Logo & Heading */}
+          <div className="text-center">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 border border-blue-100 text-[#052659] shadow-2xs">
+              <Plane size={18} />
             </div>
-
-            {/* Copyright */}
-            <p className="text-sm text-slate-500">
-              © 2026 SkySync
-            </p>
-
+            <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#021024]">Sign In</h1>
+            <p className="mt-1 text-xs text-slate-500">Access your SkySync account and group itineraries.</p>
           </div>
-        </div>
 
-        {/* Login form section */}
-        <div className="flex items-center justify-center bg-[#f7f8fc] px-6 py-12">
-
-          <div className="w-full max-w-md">
-
-            {/* Mobile back button */}
-            <Link
-              href="/"
-              className="mb-10 inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 lg:hidden"
-            >
-              <ArrowLeft size={16} />
-              Back to SkySync
-            </Link>
-
-            {/* Heading */}
-            <div className="mb-10">
-
-              <h2 className="text-4xl font-extrabold tracking-tight text-gray-950">
-                Sign in
-              </h2>
-
-              <p className="mt-3 text-gray-500">
-                Access your SkySync account.
-              </p>
-
-            </div>
-
-            {/* Form */}
-            <form
-              className="space-y-5"
-              onSubmit={handleSubmit}
-            >
-
-              {/* Email */}
-              <Input
-                label="Email address"
-                type="email"
-                placeholder="you@example.com"
-                icon={<Mail size={18} />}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-
-              {/* Password */}
-              <Input
-                label="Password"
-                type="password"
-                placeholder="Enter your password"
-                icon={<Lock size={18} />}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-
-              {/* Remember + forgot password */}
-              <div className="flex items-center justify-between text-sm">
-
-                <label className="flex items-center gap-2 text-gray-500">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  Remember me
-                </label>
-
-                <button
-                  type="button"
-                  className="font-semibold text-[#355CFF]"
-                >
-                  Forgot password?
-                </button>
-
-              </div>
-
-              {/* Error */}
-              {error && (
-                <div className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
-                  {error}
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            {/* Email */}
+            <div>
+              <label className="text-[11px] font-semibold text-slate-600">Email Address</label>
+              <div className="relative mt-1">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <Mail size={15} />
                 </div>
-              )}
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs text-[#021024] placeholder-slate-400 shadow-2xs focus:border-[#5483B3] focus:outline-none"
+                />
+              </div>
+            </div>
 
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-2xl bg-[#355CFF] py-4 font-bold text-white shadow-lg shadow-blue-500/20 transition hover:bg-[#2447DF] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading ? "Signing in..." : "Sign in"}
-              </button>
+            {/* Password */}
+            <div>
+              <label className="text-[11px] font-semibold text-slate-600">Password</label>
+              <div className="relative mt-1">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <Lock size={15} />
+                </div>
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs text-[#021024] placeholder-slate-400 shadow-2xs focus:border-[#5483B3] focus:outline-none"
+                />
+              </div>
+            </div>
 
-            </form>
+            {/* Error banner */}
+            {error && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700">
+                {error}
+              </div>
+            )}
 
-            {/* Register link */}
-            <p className="mt-8 text-center text-sm text-gray-500">
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-[#052659] py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#021024] disabled:opacity-60"
+            >
+              {loading ? "Signing in..." : "Sign in to SkySync"}
+            </button>
+          </form>
 
-              Don't have an account?{" "}
-
-              <Link
-                href="/register"
-                className="font-bold text-[#355CFF]"
-              >
-                Create one
-              </Link>
-
-            </p>
-
-          </div>
+          {/* Registration link */}
+          <p className="mt-6 text-center text-xs text-slate-500">
+            Don't have an account?{" "}
+            <Link href="/register" className="font-bold text-[#052659] hover:underline">
+              Create account
+            </Link>
+          </p>
         </div>
+      </main>
 
-      </div>
-    </main>
-  );
-}
-
-/* Input component */
-function Input({
-  label,
-  type,
-  placeholder,
-  icon,
-  value,
-  onChange,
-}: {
-  label: string;
-  type: string;
-  placeholder: string;
-  icon: React.ReactNode;
-  value: string;
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-}) {
-  return (
-    <div>
-
-      <label className="mb-2 block text-sm font-semibold text-gray-700">
-        {label}
-      </label>
-
-      <div className="relative">
-
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-          {icon}
-        </div>
-
-        <input
-          type={type}
-          placeholder={placeholder}
-          value={value}
-          onChange={onChange}
-          required
-          className="h-14 w-full rounded-2xl border border-gray-200 bg-white pl-12 pr-4 outline-none transition placeholder:text-gray-400 focus:border-[#355CFF] focus:ring-4 focus:ring-blue-500/10"
-        />
-
-      </div>
-
+      <Footer />
     </div>
   );
 }

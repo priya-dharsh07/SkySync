@@ -1,23 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @import "tailwindcss";
 
 :root {
-  --background: #f7f8fc;
-  --foreground: #111827;
+  /* SkySync Core Brand Foundation */
+  --c-navy-dark: #021024;    /* Primary dark text & high-contrast headers */
+  --c-navy-deep: #052659;    /* Secondary headers, dark brand accents */
+  --c-blue-steel: #5483B3;   /* Primary button blue, active states */
+  --c-blue-slate: #7DA0CA;   /* Secondary icons, borders, muted text */
+  --c-blue-ice: #C1E8FF;     /* Soft pill backgrounds, subtle tint highlights */
 
-  --primary: #355cff;
-  --primary-dark: #2447df;
-  --secondary: #6c63ff;
+  /* Purposeful Accent Palette */
+  --c-emerald: #10B981;      /* Verified sync, confirmed seats, atomic settlement */
+  --c-emerald-light: #ECFDF5;
+  --c-purple: #8B5CF6;       /* Pareto optimization, algorithmic intelligence */
+  --c-purple-light: #F5F3FF;
+  --c-amber: #F59E0B;        /* Redis TTL locks, hold expiration warnings */
+  --c-amber-light: #FFFBEB;
+  --c-coral: #EF4444;        /* Chaos injection tests, failure rollbacks, voided holds */
+  --c-coral-light: #FEF2F2;
 
-  --surface: #ffffff;
-  --surface-soft: #f1f4ff;
-
-  --border: #e5e7eb;
-  --muted: #6b7280;
-
-  --success: #16a34a;
-  --danger: #dc2626;
+  /* Modern Light-Mode Surface & Typography System */
+  --bg-app: #F8FAFC;         /* Light slate canvas */
+  --bg-card: #FFFFFF;        /* Pure white cards */
+  --bg-subtle: #F1F5F9;      /* Light gray-blue secondary backgrounds */
+  --border-card: #E2E8F0;    /* Crisp 1px slate borders */
+  --text-main: #0F172A;      /* Slate-900 primary text */
+  --text-muted: #64748B;     /* Slate-500 secondary text */
 }
 
 * {
@@ -26,148 +35,105 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: "DM Sans", sans-serif;
+  background-color: #F8FAFC;
+  color: #0F172A;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: "Manrope", sans-serif;
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: -0.02em;
+  color: #021024;
 }
 
-button,
-input,
-select {
-  font: inherit;
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
 }
 
-button {
-  cursor: pointer;
+/* Reusable SaaS UI Light Utilities */
+.saas-card-light {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.saas-card-light-hover:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
+}
+
+.saas-input-light {
+  background-color: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  color: #0F172A;
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
+}
+
+.saas-input-light:focus {
+  border-color: #052659;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(5, 38, 89, 0.12);
+}
+
+/* Buttons */
+.saas-btn-primary {
+  background-color: #052659;
+  color: #FFFFFF;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
+}
+
+.saas-btn-primary:hover {
+  background-color: #021024;
+  box-shadow: 0 4px 12px rgba(5, 38, 89, 0.2);
+}
+
+.saas-btn-secondary {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #0F172A;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
+}
+
+.saas-btn-secondary:hover {
+  background-color: #F8FAFC;
+  border-color: #CBD5E1;
+}
+
+/* Modern light scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }
 
 ::selection {
-  background: #355cff;
-  color: white;
-}
-/* Footer */
-.footer {
-  background: #0b1f3a;
-  color: white;
-  padding: 60px 8% 20px;
-  margin-top: 60px;
-}
-
-.footer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.5fr;
-  gap: 50px;
-}
-
-.footer-brand h2 {
-  font-size: 28px;
-  margin: 0 0 15px;
-}
-
-.footer-brand p {
-  color: #b8c4d6;
-  line-height: 1.7;
-  max-width: 320px;
-}
-
-.footer-column {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.footer-column h3 {
-  font-size: 17px;
-  margin: 0 0 10px;
-}
-
-.footer-column a,
-.footer-column p {
-  color: #b8c4d6;
-  text-decoration: none;
-  font-size: 14px;
-  margin: 0;
-}
-
-.footer-column a:hover {
-  color: white;
-}
-
-.footer-bottom {
-  max-width: 1200px;
-  margin: 45px auto 0;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.footer-bottom p {
-  color: #8f9db2;
-  font-size: 13px;
-  margin: 0;
-}
-
-.footer-socials {
-  display: flex;
-  gap: 20px;
-}
-
-.footer-socials a {
-  color: #b8c4d6;
-  text-decoration: none;
-  font-size: 13px;
-}
-
-.footer-socials a:hover {
-  color: white;
-}
-
-/* Responsive Footer */
-@media (max-width: 768px) {
-  .footer {
-    padding: 45px 6% 20px;
-  }
-
-  .footer-container {
-    grid-template-columns: 1fr 1fr;
-    gap: 35px;
-  }
-
-  .footer-brand {
-    grid-column: 1 / -1;
-  }
-
-  .footer-bottom {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .footer-container {
-    grid-template-columns: 1fr;
-  }
-
-  .footer-brand {
-    grid-column: auto;
-  }
+  background: #C1E8FF;
+  color: #021024;
 }
