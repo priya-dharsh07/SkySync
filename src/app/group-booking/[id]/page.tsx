@@ -12,9 +12,8 @@ import {
   ArrowLeft, 
   Plane, 
   Sparkles, 
-  Terminal, 
-  AlertCircle,
-  Check
+  Check,
+  AlertCircle
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import { GroupMemberSession, SagaExecutionResult, ChaosConfig, SagaStepName } from "@/lib/saga/types";
@@ -36,11 +35,11 @@ export default function GroupBookingPage({ params }: { params: Promise<{ id: str
   const [executingSaga, setExecutingSaga] = useState(false);
   const [sagaResult, setSagaResult] = useState<SagaExecutionResult | null>(null);
 
-  // Redis Lock countdown timer in seconds
+  // Seat and price hold countdown timer in seconds
   const [ttlSeconds, setTtlSeconds] = useState(300);
 
-  // Chaos simulation modes
-  const [chaosMode, setChaosMode] = useState<"NONE" | "INVENTORY_DEPLETED" | "PRICE_SURGE" | "CARD_DECLINED">("NONE");
+  // Group checkout configuration
+  const [chaosMode] = useState<"NONE" | "INVENTORY_DEPLETED" | "PRICE_SURGE" | "CARD_DECLINED">("NONE");
   const [targetTravelerId, setTargetTravelerId] = useState<string>("");
 
   useEffect(() => {
@@ -126,7 +125,7 @@ export default function GroupBookingPage({ params }: { params: Promise<{ id: str
         <Navbar />
         <div className="flex h-[80vh] flex-col items-center justify-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#052659] border-t-transparent" />
-          <p className="font-mono text-xs font-semibold text-slate-500">Loading Saga War Room...</p>
+          <p className="font-mono text-xs font-semibold text-slate-500">Loading Group Trip Itinerary...</p>
         </div>
       </div>
     );
@@ -149,11 +148,11 @@ export default function GroupBookingPage({ params }: { params: Promise<{ id: str
   }
 
   const stepsList: { name: SagaStepName; label: string; desc: string }[] = [
-    { name: "ACQUIRE_LOCKS", label: "01. Distributed Seat Locks", desc: "Secures Redis TTL locks on all seats" },
-    { name: "AUTHORIZE_ESCROW", label: "02. Two-Phase Escrow", desc: "Places pre-authorization holds without capturing funds" },
-    { name: "VERIFY_INVENTORY", label: "03. Live GDS Audit", desc: "Audits live seat inventory and locked fares" },
-    { name: "EXECUTE_CHECKOUT", label: "04. Multi-Airline Issuance", desc: "Simultaneous ticketing across distinct carriers" },
-    { name: "CONFIRM_CAPTURE", label: "05. Atomic Settlement", desc: "Simultaneous capture upon 100% group success" },
+    { name: "ACQUIRE_LOCKS", label: "01. Group Flights Aligned", desc: "Coordinating flight schedules for group arrival" },
+    { name: "AUTHORIZE_ESCROW", label: "02. Seats Reserved", desc: "Holding selected seats for all group travelers" },
+    { name: "VERIFY_INVENTORY", label: "03. Fare Lock Guaranteed", desc: "100% price lock with zero surge guarantee" },
+    { name: "EXECUTE_CHECKOUT", label: "04. Airline Confirmation", desc: "Confirming reservations with partner airlines" },
+    { name: "CONFIRM_CAPTURE", label: "05. E-Tickets Issued", desc: "Issuing digital boarding documents and PNRs" },
   ];
 
   return (
@@ -175,11 +174,11 @@ export default function GroupBookingPage({ params }: { params: Promise<{ id: str
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  Group Booking War Room
+                  Group Trip Itinerary
                 </span>
               </div>
               <h1 className="text-xl font-bold tracking-tight text-[#021024] sm:text-2xl">
-                Convergence Hub: {session.destination.city} ({session.destination.code})
+                Group Trip: {session.destination.city}, {session.destination.country} ({session.destination.code})
               </h1>
             </div>
           </div>
@@ -189,35 +188,35 @@ export default function GroupBookingPage({ params }: { params: Promise<{ id: str
             <div className="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs shadow-xs">
               <Clock size={16} className="text-amber-600" />
               <div>
-                <span className="text-[9px] uppercase font-bold tracking-wider text-amber-700">Redis Lock TTL</span>
+                <span className="text-[9px] uppercase font-bold tracking-wider text-amber-700">Guaranteed Fare Hold</span>
                 <div className="font-mono text-sm font-bold text-amber-900">{formatTtl(ttlSeconds)}</div>
               </div>
             </div>
 
             <div className="hidden rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs shadow-xs sm:block">
-              <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400">Session ID</span>
+              <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400">Group Trip ID</span>
               <div className="font-mono text-xs font-bold text-slate-700">{session.id}</div>
             </div>
           </div>
         </div>
 
-        {/* Main Grid: Travelers Roster vs Saga Orchestrator */}
+        {/* Main Grid: Travelers Roster vs Group Stepper */}
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
-          {/* Left Column: Group Roster & Chaos Console */}
+          {/* Left Column: Group Roster & Travel Benefits */}
           <div className="space-y-6">
             {/* Group Members Section */}
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
                 <div>
                   <h2 className="text-sm font-bold text-[#021024]">
-                    Synchronous Passenger Roster ({session.members.length} Travelers)
+                    Traveler Itineraries ({session.members.length} Travelers)
                   </h2>
                   <p className="text-[11px] text-slate-500">
                     All members flying into {session.destination.city}.
                   </p>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] uppercase font-bold text-slate-400">Total Escrow</div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400">Total Group Fare</div>
                   <div className="font-mono text-base font-bold text-[#052659]">${totalGroupCost}</div>
                 </div>
               </div>
@@ -260,10 +259,10 @@ export default function GroupBookingPage({ params }: { params: Promise<{ id: str
                               : "border-blue-200 bg-blue-50 text-[#052659]"
                           }`}>
                             {displayEscrow === "CAPTURED"
-                              ? "SETTLED $" + member.flight.priceUsd
+                              ? "CONFIRMED"
                               : displayEscrow === "VOIDED_REFUNDED"
-                              ? "HOLD VOIDED $0"
-                              : "ESCROW READY"}
+                              ? "CANCELLED"
+                              : "SEAT RESERVED"}
                           </span>
 
                           <span className="font-mono text-xs font-bold text-[#021024]">
@@ -292,130 +291,45 @@ export default function GroupBookingPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
 
-            {/* Interactive Chaos Testing Console */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            {/* Group Travel Price Protection & Policy */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
               <div className="flex items-center gap-2">
-                <ShieldCheck size={17} className="text-[#052659]" />
+                <ShieldCheck size={18} className="text-[#052659]" />
                 <h3 className="text-xs font-bold text-[#021024] uppercase tracking-wider">
-                  Chaos Engineering & Rollback Simulator
+                  SkySync Group Travel Guarantee
                 </h3>
               </div>
-              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                Simulate airline inventory depletion or dynamic price surges to verify that compensating transactions automatically void all holds with zero financial liability.
+              <p className="text-xs text-slate-500 leading-relaxed">
+                When booking group itineraries, SkySync guarantees that all member flights are confirmed simultaneously. If any individual flight experiences inventory changes, your group is protected with zero liability.
               </p>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setChaosMode("NONE")}
-                  className={`rounded-xl border p-3.5 text-left transition ${
-                    chaosMode === "NONE"
-                      ? "border-emerald-500 bg-emerald-50/40 text-emerald-950 ring-1 ring-emerald-400"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold">Happy Path</span>
-                    {chaosMode === "NONE" && <CheckCircle2 size={15} className="text-emerald-600" />}
-                  </div>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    All seats confirm, escrow captured atomically.
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setChaosMode("INVENTORY_DEPLETED")}
-                  className={`rounded-xl border p-3.5 text-left transition ${
-                    chaosMode === "INVENTORY_DEPLETED"
-                      ? "border-rose-500 bg-rose-50/40 text-rose-950 ring-1 ring-rose-400"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold">Simulate Seat Depletion</span>
-                    {chaosMode === "INVENTORY_DEPLETED" && <CheckCircle2 size={15} className="text-rose-600" />}
-                  </div>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Seat sold out on Traveler 2 → Triggers full rollback.
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setChaosMode("PRICE_SURGE")}
-                  className={`rounded-xl border p-3.5 text-left transition ${
-                    chaosMode === "PRICE_SURGE"
-                      ? "border-amber-500 bg-amber-50/40 text-amber-950 ring-1 ring-amber-400"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold">Simulate Price Surge</span>
-                    {chaosMode === "PRICE_SURGE" && <CheckCircle2 size={15} className="text-amber-600" />}
-                  </div>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Fare increases above guaranteed lock → Saga halts.
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setChaosMode("CARD_DECLINED")}
-                  className={`rounded-xl border p-3.5 text-left transition ${
-                    chaosMode === "CARD_DECLINED"
-                      ? "border-rose-500 bg-rose-50/40 text-rose-950 ring-1 ring-rose-400"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold">Simulate Card Decline</span>
-                    {chaosMode === "CARD_DECLINED" && <CheckCircle2 size={15} className="text-rose-600" />}
-                  </div>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Hold fails on one member → Group cancels cleanly.
-                  </p>
-                </button>
+              <div className="grid gap-3 sm:grid-cols-3 pt-1">
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Price Lock</span>
+                  <span className="text-xs font-bold text-[#021024]">100% Guaranteed</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5">No surprise price hikes during checkout.</p>
+                </div>
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Arrival Match</span>
+                  <span className="text-xs font-bold text-[#021024]">Coordinated Times</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Flight schedules aligned for easy meetup.</p>
+                </div>
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Customer Care</span>
+                  <span className="text-xs font-bold text-[#021024]">24/7 Group Support</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Dedicated travel team assistance.</p>
+                </div>
               </div>
             </div>
-
-            {/* Audit Logs Console */}
-            {sagaResult && (
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-sm">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-                  <div className="flex items-center gap-2">
-                    <Terminal size={14} className="text-emerald-400" />
-                    <span className="font-mono text-xs font-bold text-emerald-400 uppercase">
-                      Saga Audit Telemetry
-                    </span>
-                  </div>
-                  <span className="font-mono text-[10px] text-slate-400">
-                    {sagaResult.logs.length} events logged
-                  </span>
-                </div>
-
-                <div className="mt-2.5 max-h-56 space-y-1 overflow-y-auto font-mono text-[11px]">
-                  {sagaResult.logs.map((log, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded p-1 text-slate-300 hover:bg-slate-800/60"
-                    >
-                      <span className="text-slate-500">[{log.timestamp.split("T")[1].slice(0, 8)}]</span>{" "}
-                      <strong className="text-blue-300">[{log.step}]</strong> {log.message}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Right Column: Saga Stepper */}
+          {/* Right Column: Group Booking Progress */}
           <div className="space-y-6">
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
                 <div className="flex items-center gap-2">
                   <Sparkles size={16} className="text-purple-600" />
-                  <h3 className="text-xs font-bold text-[#021024]">Saga Orchestrator State</h3>
+                  <h3 className="text-xs font-bold text-[#021024]">Booking Progress</h3>
                 </div>
                 <span className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold border ${
                   sagaResult?.isAtomicSuccess
@@ -424,7 +338,7 @@ export default function GroupBookingPage({ params }: { params: Promise<{ id: str
                     ? "border-rose-200 bg-rose-50 text-rose-700"
                     : "border-slate-200 bg-slate-50 text-slate-700"
                 }`}>
-                  {sagaResult?.status || "READY"}
+                  {sagaResult?.isAtomicSuccess ? "CONFIRMED" : sagaResult?.status === "ROLLED_BACK" ? "CANCELLED" : "READY"}
                 </span>
               </div>
 
@@ -467,7 +381,7 @@ export default function GroupBookingPage({ params }: { params: Promise<{ id: str
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-[#021024]">{step.label}</span>
                           {isRolledBack && (
-                            <span className="text-[10px] font-bold text-rose-600">VOIDED</span>
+                            <span className="text-[10px] font-bold text-rose-600">CANCELLED</span>
                           )}
                         </div>
                         <p className="text-[11px] text-slate-500">{step.desc}</p>
@@ -488,51 +402,56 @@ export default function GroupBookingPage({ params }: { params: Promise<{ id: str
                     {sagaResult.isAtomicSuccess ? (
                       <>
                         <CheckCircle2 size={16} className="text-emerald-600" />
-                        <span>All {sagaResult.totalMembers} Seats Booked Atomically!</span>
+                        <span>All {sagaResult.totalMembers} Group Flights Confirmed!</span>
                       </>
                     ) : (
                       <>
                         <ShieldCheck size={16} className="text-rose-600" />
-                        <span>Compensating Rollback Executed</span>
+                        <span>Group Itinerary Released</span>
                       </>
                     )}
                   </div>
                   <p className="mt-1 text-[11px] text-slate-600 leading-relaxed">
                     {sagaResult.isAtomicSuccess
-                      ? `Settlement of $${sagaResult.totalCapturedUsd} captured. E-tickets issued.`
-                      : `Zero liability incurred ($${sagaResult.totalRefundedVoidedUsd} holds voided). No members stranded.`}
+                      ? `Total group booking of $${sagaResult.totalCapturedUsd} confirmed. E-tickets and booking references have been sent to registered travelers.`
+                      : `No charges were captured ($${sagaResult.totalRefundedVoidedUsd} holds released). You can re-attempt group checkout at any time.`}
                   </p>
                 </div>
               )}
 
               {/* Primary Action Button */}
-              <button
-                type="button"
-                onClick={triggerSagaCheckout}
-                disabled={executingSaga}
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#052659] py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#021024] disabled:opacity-60"
-              >
-                {executingSaga ? (
-                  <>
-                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    <span>Orchestrating Saga...</span>
-                  </>
-                ) : sagaResult ? (
-                  <>
-                    <RotateCcw size={14} />
-                    <span>Re-Run Atomic Saga</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock size={14} className="text-blue-300" />
-                    <span>Execute Atomic Group Checkout</span>
-                  </>
-                )}
-              </button>
+              {sagaResult?.isAtomicSuccess ? (
+                <Link
+                  href="/profile"
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700"
+                >
+                  <CheckCircle2 size={14} />
+                  <span>View All Bookings in Profile</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={triggerSagaCheckout}
+                  disabled={executingSaga}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#052659] py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#021024] disabled:opacity-60"
+                >
+                  {executingSaga ? (
+                    <>
+                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <span>Confirming Group Bookings...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={14} className="text-blue-300" />
+                      <span>Confirm & Book Group Flights</span>
+                    </>
+                  )}
+                </button>
+              )}
 
               <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
                 <ShieldCheck size={14} className="text-emerald-600" />
-                <span>Protected by Two-Phase Escrow & Redis Redlock</span>
+                <span>Protected by SkySync 100% Group Price Guarantee</span>
               </div>
             </div>
           </div>

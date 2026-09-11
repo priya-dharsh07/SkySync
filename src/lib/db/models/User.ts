@@ -5,6 +5,11 @@ export interface IUser extends Document {
   email: string;
   password?: string;
   role: "user" | "admin";
+  homeAirport?: string;
+  homeCity?: string;
+  country?: string;
+  lat?: number;
+  lng?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +37,30 @@ const UserSchema: Schema<IUser> = new Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+    homeAirport: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: "DEL",
+    },
+    homeCity: {
+      type: String,
+      trim: true,
+      default: "New Delhi",
+    },
+    country: {
+      type: String,
+      trim: true,
+      default: "India",
+    },
+    lat: {
+      type: Number,
+      default: 28.5562,
+    },
+    lng: {
+      type: Number,
+      default: 77.1000,
     },
   },
   {

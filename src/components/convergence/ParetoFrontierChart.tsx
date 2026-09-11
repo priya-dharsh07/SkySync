@@ -57,21 +57,21 @@ export default function ParetoFrontierChart({
         <div>
           <div className="flex items-center gap-1.5 text-purple-700">
             <Sparkles size={15} className="text-purple-600" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#021024]">Pareto Trade-Off Frontier</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#021024]">Price vs. Arrival Comparison</h3>
           </div>
           <p className="text-[11px] text-slate-500">
-            Bottom-left hubs offer optimal trade-offs: minimal fare disparity and aligned arrivals.
+            Compare destinations. Cities towards the bottom-left offer the best blend of low fare variance and close arrival times.
           </p>
         </div>
 
         <div className="flex items-center gap-3 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-purple-600 ring-2 ring-purple-100" />
-            <span className="text-purple-900 font-semibold text-[11px]">Pareto Optimal</span>
+            <span className="text-purple-900 font-semibold text-[11px]">Top Match</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-slate-300" />
-            <span className="text-slate-500 text-[11px]">Feasible Candidate</span>
+            <span className="text-slate-500 text-[11px]">Alternative Destination</span>
           </div>
         </div>
       </div>
@@ -209,11 +209,11 @@ export default function ParetoFrontierChart({
       <div className="mt-3.5 flex items-center justify-between rounded-xl bg-slate-50 border border-slate-100 p-2.5 text-xs text-slate-600">
         <div className="flex items-center gap-1.5">
           <Info size={13} className="text-[#5483B3]" />
-          <span>Selected Convergence Hub:</span>
+          <span>Selected Meeting Destination:</span>
           <strong className="text-[#021024]">{selectedDestination?.destination.city} ({selectedDestination?.destination.code})</strong>
         </div>
         <div className="font-mono text-[11px] font-semibold text-purple-700">
-          Fairness: {selectedDestination?.compositeFairnessScore}/100
+          Match Score: {selectedDestination?.compositeFairnessScore}%
         </div>
       </div>
     </div>

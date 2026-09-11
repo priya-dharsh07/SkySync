@@ -11,14 +11,30 @@ import {
   LogOut,
   Ticket,
   Clock3,
+  CheckCircle2,
+  AlertCircle,
+  QrCode,
+  Printer,
+  X,
+  MapPin,
+  LocateFixed,
+  ShieldCheck,
+  RotateCcw,
+  Check
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { findNearestAirport } from "@/lib/convergence/airports";
 
 type User = {
   id: string;
   name: string;
   email: string;
+  homeAirport?: string;
+  homeCity?: string;
+  country?: string;
+  lat?: number;
+  lng?: number;
   createdAt?: string;
 };
 
@@ -35,11 +51,11 @@ type BookingItem = {
   departureDate: string;
   departureTime: string;
   arrivalTime: string;
-  passengers: Array<{ firstName: string; lastName: string; email?: string }>;
+  passengers: Array<{ firstName: string; lastName: string; email?: string; passportNumber?: string }>;
   selectedSeats: string[];
   totalPrice: number;
   escrowStatus: string;
-  status: string;
+  status: "CONFIRMED" | "CANCELLED";
   createdAt: string;
 };
 
@@ -47,6 +63,18 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<"ALL" | "CONFIRMED" | "CANCELLED">("ALL");
+
+  // Selected booking for Boarding Pass Modal
+  const [viewingBooking, setViewingBooking] = useState<BookingItem | null>(null);
+
+  // Cancellation modal state
+  const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
+  const [cancellingLoading, setCancellingLoading] = useState(false);
+
+  // Location updating state
+  const [updatingLocation, setUpdatingLocation] = useState(false);
+  const [locationNotice, setLocationNotice] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -92,17 +120,112 @@ export default function ProfilePage() {
   async function handleLogout() {
     await fetch("/api/auth/logout", {
       method: "POST",
+      credentials: "include",
     });
 
     window.location.href = "/";
   }
 
+  // Update user default home location via GPS
+  function handleDetectHomeLocation() {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setUpdatingLocation(true);
+    setLocationNotice(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const nearest = findNearestAirport(latitude, longitude);
+
+        if (nearest && nearest.airport) {
+          try {
+            const res = await fetch("/api/users", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                homeAirport: nearest.airport.code,
+                homeCity: nearest.airport.city,
+                country: nearest.airport.country,
+                lat: latitude,
+                lng: longitude,
+              }),
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              if (data.user) {
+                setUser((prev) => (prev ? { ...prev, ...data.user } : null));
+                setLocationNotice(`Updated home base to ${nearest.airport.city} (${nearest.airport.code})`);
+                setTimeout(() => setLocationNotice(null), 5000);
+              }
+            }
+          } catch (err) {
+            console.error("Failed updating location:", err);
+          }
+        }
+        setUpdatingLocation(false);
+      },
+      (err) => {
+        setUpdatingLocation(false);
+        console.warn("Geolocation warning:", err);
+        setLocationNotice("Unable to detect coordinates. Default kept as New Delhi (DEL).");
+        setTimeout(() => setLocationNotice(null), 4000);
+      },
+      { timeout: 8000 }
+    );
+  }
+
+  // Cancel reservation
+  async function confirmCancelBooking() {
+    if (!cancellingBookingId) return;
+
+    try {
+      setCancellingLoading(true);
+      const res = await fetch("/api/bookings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          bookingId: cancellingBookingId,
+          action: "CANCEL",
+        }),
+      });
+
+      if (res.ok) {
+        setBookings((prev) =>
+          prev.map((b) =>
+            b._id === cancellingBookingId
+              ? { ...b, status: "CANCELLED", escrowStatus: "VOIDED" }
+              : b
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Cancel error:", err);
+    } finally {
+      setCancellingLoading(false);
+      setCancellingBookingId(null);
+    }
+  }
+
+  const filteredBookings = bookings.filter((b) => {
+    if (activeFilter === "CONFIRMED") return b.status === "CONFIRMED";
+    if (activeFilter === "CANCELLED") return b.status === "CANCELLED";
+    return true;
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
         <Navbar />
-        <div className="flex h-[80vh] items-center justify-center">
+        <div className="flex h-[80vh] flex-col items-center justify-center gap-2">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#052659] border-t-transparent" />
+          <span className="text-xs text-slate-500 font-semibold">Synchronizing account and booking ledger...</span>
         </div>
       </div>
     );
@@ -118,7 +241,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
       <Navbar />
 
-      <main className="mx-auto max-w-5xl px-4 pt-24 pb-16 sm:px-6">
+      <main className="mx-auto max-w-6xl px-4 pt-24 pb-20 sm:px-6">
         {/* Back Link */}
         <Link
           href="/"
@@ -128,18 +251,18 @@ export default function ProfilePage() {
         </Link>
 
         {/* Profile Card Header */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-7 shadow-sm">
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-7 shadow-sm">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 border border-blue-100 text-2xl font-extrabold text-[#052659] shadow-2xs">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#052659] text-2xl font-extrabold text-[#C1E8FF] shadow-xs">
                 {initial}
               </div>
 
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  SkySync Account
+                  SkySync Account & Traveler Profile
                 </span>
-                <h1 className="text-xl font-bold tracking-tight text-[#021024]">{user.name}</h1>
+                <h1 className="text-2xl font-extrabold tracking-tight text-[#021024]">{user.name}</h1>
                 <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
                   <Mail size={13} />
                   <span>{user.email}</span>
@@ -149,156 +272,400 @@ export default function ProfilePage() {
 
             <button
               onClick={handleLogout}
-              className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:text-[#021024]"
+              className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:text-rose-600"
             >
-              <LogOut size={14} className="text-slate-400" />
+              <LogOut size={14} />
               <span>Sign Out</span>
             </button>
           </div>
         </div>
 
-        {/* Grid Stats & Quick Actions */}
+        {/* Location Notice alert if updated */}
+        {locationNotice && (
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 animate-in fade-in">
+            <Check size={15} className="shrink-0 text-emerald-600" />
+            <span>{locationNotice}</span>
+          </div>
+        )}
+
+        {/* Grid Stats & Quick Preferences */}
         <div className="mt-6 grid gap-5 sm:grid-cols-3">
-          {/* Account Details */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2.5 text-[#052659] border-b border-slate-100 pb-3">
-              <UserRound size={16} className="text-[#5483B3]" />
-              <h2 className="text-xs font-bold text-[#021024] uppercase tracking-wider">Account</h2>
-            </div>
-            <div className="mt-3.5 space-y-2.5 text-xs">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400">Full Name</span>
-                <p className="font-bold text-[#021024]">{user.name}</p>
+          {/* Default Home Base Location Widget */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2 text-[#052659]">
+                <MapPin size={16} className="text-[#5483B3]" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#021024]">Default Home Base</h3>
               </div>
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400">Email</span>
-                <p className="font-semibold text-slate-700 truncate">{user.email}</p>
-              </div>
-              {user.createdAt && (
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Member Since</span>
-                  <p className="flex items-center gap-1 font-semibold text-[#052659]">
-                    <CalendarDays size={12} className="text-[#5483B3]" />
-                    {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
-                  </p>
-                </div>
-              )}
+              <span className="font-mono text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                Active
+              </span>
             </div>
+
+            <div>
+              <div className="text-sm font-extrabold text-[#021024]">
+                {user.homeCity || "New Delhi"} ({user.homeAirport || "DEL"})
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Automatically set as your departure city for group trip itineraries.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleDetectHomeLocation}
+              disabled={updatingLocation}
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-2xs disabled:opacity-60"
+            >
+              <LocateFixed size={13} className={updatingLocation ? "animate-spin text-[#052659]" : "text-[#5483B3]"} />
+              <span>{updatingLocation ? "Detecting..." : "Update via Current Location"}</span>
+            </button>
           </div>
 
-          {/* Booked Trips */}
+          {/* Booked Flights Overview */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2.5 text-[#052659] border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2 text-[#052659] border-b border-slate-100 pb-3">
               <Ticket size={16} className="text-[#5483B3]" />
-              <h2 className="text-xs font-bold text-[#021024] uppercase tracking-wider">Booked Trips</h2>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#021024]">My Reservations</h3>
             </div>
-            <div className="mt-4">
+            <div className="mt-3 flex items-baseline justify-between">
               <div className="font-mono text-3xl font-extrabold text-[#052659]">{bookings.length}</div>
-              <p className="mt-0.5 text-xs text-slate-500">Active flight reservations</p>
-              <Link
-                href="/flights"
-                className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#052659] py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#021024] transition"
-              >
-                <Plane size={13} />
-                <span>Search Flights</span>
-              </Link>
+              <div className="text-right text-xs">
+                <span className="text-emerald-700 font-bold">
+                  {bookings.filter((b) => b.status === "CONFIRMED").length} Confirmed
+                </span>
+                <span className="text-slate-400 block text-[10px]">
+                  {bookings.filter((b) => b.status === "CANCELLED").length} Cancelled
+                </span>
+              </div>
             </div>
+            <Link
+              href="/flights"
+              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#052659] py-2 text-xs font-bold text-white shadow-sm hover:bg-[#021024] transition"
+            >
+              <Plane size={13} />
+              <span>Book Another Flight</span>
+            </Link>
           </div>
 
-          {/* Quick Shortcuts */}
+          {/* Protection & Support */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2.5 text-[#052659] border-b border-slate-100 pb-3">
-              <Plane size={16} className="text-[#5483B3]" />
-              <h2 className="text-xs font-bold text-[#021024] uppercase tracking-wider">Quick Actions</h2>
+            <div className="flex items-center gap-2 text-[#052659] border-b border-slate-100 pb-3">
+              <ShieldCheck size={16} className="text-[#5483B3]" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#021024]">Travel Protection</h3>
             </div>
-            <div className="mt-3.5 space-y-2 text-xs">
-              <Link
-                href="/"
-                className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 text-slate-700 hover:border-slate-300 hover:bg-white transition"
-              >
-                <span>Convergence Engine</span>
-                <span className="font-mono text-[10px] font-bold text-[#052659]">Group</span>
-              </Link>
-              <Link
-                href="/flights"
-                className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 text-slate-700 hover:border-slate-300 hover:bg-white transition"
-              >
-                <span>Single Flights</span>
-                <span className="font-mono text-[10px] font-bold text-slate-500">Solo</span>
-              </Link>
+            <div className="mt-3 space-y-2 text-xs text-slate-600">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100">
+                <span>Trip Protection:</span>
+                <strong className="text-emerald-700 font-mono text-[11px]">ACTIVE</strong>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100">
+                <span>Customer Care:</span>
+                <strong className="text-[#052659] font-mono text-[11px]">24/7 PRIORITY</strong>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Booking History Section */}
-        <div className="mt-6 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="text-sm font-bold text-[#021024]">Booking History</h2>
-            <p className="text-xs text-slate-500">Completed and upcoming flight reservations.</p>
+        {/* BOOKING HISTORY SECTION */}
+        <div className="mt-8 rounded-3xl border border-slate-200/80 bg-white p-7 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-base font-extrabold text-[#021024]">Flight Booking History</h2>
+              <p className="text-xs text-slate-500">
+                All confirmed and past travel itineraries recorded under your account.
+              </p>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setActiveFilter("ALL")}
+                className={`rounded-lg px-3 py-1 font-bold transition ${
+                  activeFilter === "ALL" ? "bg-white text-[#052659] shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                All ({bookings.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveFilter("CONFIRMED")}
+                className={`rounded-lg px-3 py-1 font-bold transition ${
+                  activeFilter === "CONFIRMED" ? "bg-white text-emerald-700 shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Confirmed ({bookings.filter((b) => b.status === "CONFIRMED").length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveFilter("CANCELLED")}
+                className={`rounded-lg px-3 py-1 font-bold transition ${
+                  activeFilter === "CANCELLED" ? "bg-white text-rose-700 shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Cancelled ({bookings.filter((b) => b.status === "CANCELLED").length})
+              </button>
+            </div>
           </div>
 
-          {bookings.length === 0 ? (
-            <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
-              <Clock3 size={24} className="mx-auto text-slate-400" />
-              <h3 className="mt-2 text-xs font-bold text-[#021024]">No Bookings Yet</h3>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Your booked flights and group itineraries will appear here.
+          {filteredBookings.length === 0 ? (
+            <div className="mt-8 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-10 text-center space-y-3">
+              <Clock3 size={32} className="mx-auto text-slate-300" />
+              <h3 className="text-sm font-bold text-[#021024]">No Reservations Found</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                {activeFilter === "ALL"
+                  ? "You haven't completed any bookings yet. Search flights or launch a group convergence session to book."
+                  : `No ${activeFilter.toLowerCase()} reservations in your account.`}
               </p>
               <Link
                 href="/flights"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-[#052659] shadow-2xs hover:bg-slate-50 transition"
+                className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-[#052659] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#021024] transition"
               >
-                <span>Explore Available Flights</span>
+                <Plane size={13} />
+                <span>Explore Flight Deals</span>
               </Link>
             </div>
           ) : (
-            <div className="mt-4 space-y-3">
-              {bookings.map((b) => (
-                <div
-                  key={b._id}
-                  className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-4.5 transition hover:border-slate-300"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#052659] font-mono text-xs font-bold text-white">
-                        {b.airline.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-[#021024]">{b.airline} ({b.flightNumber})</div>
-                        <div className="font-mono text-[10px] text-slate-500">
-                          Ref: <strong className="text-[#052659]">{b.bookingReference}</strong> • {b.eTicketNumber}
+            <div className="mt-5 space-y-4">
+              {filteredBookings.map((b) => {
+                const isCancelled = b.status === "CANCELLED";
+
+                return (
+                  <div
+                    key={b._id}
+                    className={`rounded-2xl border p-5 transition shadow-2xs ${
+                      isCancelled
+                        ? "border-slate-200 bg-slate-50/60 opacity-80"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-xs"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      {/* Carrier & Flight Header */}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-11 w-11 items-center justify-center rounded-xl font-mono text-xs font-bold ${
+                            isCancelled ? "bg-slate-300 text-slate-600" : "bg-[#052659] text-[#C1E8FF]"
+                          }`}
+                        >
+                          {b.airline.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-[#021024]">
+                              {b.airline} ({b.flightNumber})
+                            </h4>
+                            <span
+                              className={`rounded-full px-2 py-0.5 font-mono text-[9px] font-bold border ${
+                                isCancelled
+                                  ? "border-rose-200 bg-rose-50 text-rose-700"
+                                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              }`}
+                            >
+                              {b.status}
+                            </span>
+                          </div>
+                          <div className="font-mono text-xs text-slate-500">
+                            PNR: <strong className="text-[#052659]">{b.bookingReference}</strong> • {b.eTicketNumber}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-6 text-center text-xs">
-                      <div>
-                        <div className="font-mono font-bold text-slate-900">{b.originCode}</div>
-                        <div className="text-[10px] text-slate-400">{b.departureTime}</div>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <span className="text-[9px] text-slate-400">{b.departureDate}</span>
-                        <div className="w-16 border-t border-slate-300 my-1 relative">
-                          <Plane size={10} className="absolute left-1/2 -top-1.5 -translate-x-1/2 text-[#5483B3]" />
+                      {/* Flight Route & Timings */}
+                      <div className="flex items-center gap-6 text-center text-xs">
+                        <div>
+                          <div className="font-mono text-base font-extrabold text-[#021024]">{b.originCode}</div>
+                          <div className="text-[11px] text-slate-500 font-semibold">{b.departureTime}</div>
                         </div>
-                        <span className="font-mono text-[9px] text-emerald-700 font-bold">CONFIRMED</span>
-                      </div>
-                      <div>
-                        <div className="font-mono font-bold text-slate-900">{b.destinationCode}</div>
-                        <div className="text-[10px] text-slate-400">{b.arrivalTime}</div>
-                      </div>
-                    </div>
 
-                    <div className="text-right text-xs">
-                      <div className="font-mono font-bold text-[#052659]">₹{b.totalPrice}</div>
-                      <div className="font-mono text-[10px] text-slate-400">Seats: {b.selectedSeats?.join(", ") || "Standard"}</div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] text-slate-400 font-mono">{b.departureDate}</span>
+                          <div className="relative my-1 w-20 border-t border-slate-300">
+                            <Plane size={11} className="absolute left-1/2 -top-1.5 -translate-x-1/2 text-[#5483B3]" />
+                          </div>
+                          <span className="text-[9px] text-slate-400 uppercase font-semibold">Non-stop</span>
+                        </div>
+
+                        <div>
+                          <div className="font-mono text-base font-extrabold text-[#021024]">{b.destinationCode}</div>
+                          <div className="text-[11px] text-slate-500 font-semibold">{b.arrivalTime}</div>
+                        </div>
+                      </div>
+
+                      {/* Price & Actions */}
+                      <div className="flex items-center gap-3 text-right">
+                        <div>
+                          <div className="font-mono text-base font-extrabold text-[#052659]">₹{b.totalPrice}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">
+                            Seats: {b.selectedSeats?.join(", ") || "Standard"}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setViewingBooking(b)}
+                            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                          >
+                            View Boarding Pass
+                          </button>
+
+                          {!isCancelled && (
+                            <button
+                              type="button"
+                              onClick={() => setCancellingBookingId(b._id)}
+                              className="rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 transition shadow-2xs"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
+
+        {/* BOARDING PASS MODAL */}
+        {viewingBooking && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-150">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Ticket size={18} className="text-[#052659]" />
+                  <h3 className="text-sm font-bold text-[#021024]">
+                    Boarding Pass: {viewingBooking.bookingReference}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewingBooking(null)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Boarding Pass Box */}
+              <div className="overflow-hidden rounded-2xl border-2 border-slate-900 bg-white shadow-md">
+                <div className="flex items-center justify-between bg-slate-900 px-5 py-3 text-white">
+                  <span className="font-extrabold text-sm">{viewingBooking.airline}</span>
+                  <span className="font-mono text-xs font-bold text-[#C1E8FF]">{viewingBooking.flightNumber}</span>
+                </div>
+
+                <div className="p-5 space-y-4">
+                  <div className="grid grid-cols-3 items-center text-center">
+                    <div className="text-left">
+                      <div className="font-mono text-3xl font-extrabold">{viewingBooking.originCode}</div>
+                      <div className="text-xs text-slate-500 font-bold">{viewingBooking.origin}</div>
+                      <div className="font-mono text-xs text-[#052659] font-bold">{viewingBooking.departureTime}</div>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="font-mono text-[9px] text-emerald-700 font-bold">CONFIRMED</span>
+                      <div className="relative my-1 w-20 border-t border-slate-300">
+                        <Plane size={10} className="absolute left-1/2 -top-1.5 -translate-x-1/2 text-[#5483B3]" />
+                      </div>
+                      <span className="font-mono text-[10px] text-slate-500">{viewingBooking.departureDate}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-mono text-3xl font-extrabold">{viewingBooking.destinationCode}</div>
+                      <div className="text-xs text-slate-500 font-bold">{viewingBooking.destination}</div>
+                      <div className="font-mono text-xs text-[#052659] font-bold">{viewingBooking.arrivalTime}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl bg-slate-50 p-3 font-mono text-xs border border-slate-100">
+                    <div>
+                      <span className="text-[9px] uppercase text-slate-400 block font-sans font-bold">Passenger</span>
+                      <span className="font-bold text-slate-900 truncate block">
+                        {viewingBooking.passengers?.map((p) => `${p.firstName} ${p.lastName}`).join(", ") || "Traveler"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] uppercase text-slate-400 block font-sans font-bold">Seats</span>
+                      <span className="font-bold text-emerald-700">{viewingBooking.selectedSeats?.join(", ") || "14A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] uppercase text-slate-400 block font-sans font-bold">Terminal / Gate</span>
+                      <span className="font-bold text-[#052659]">T3 • 14B</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] uppercase text-slate-400 block font-sans font-bold">E-Ticket</span>
+                      <span className="text-slate-700">{viewingBooking.eTicketNumber}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                    <div className="flex items-center gap-2">
+                      <QrCode size={32} className="text-slate-900" />
+                      <span className="font-mono text-[9px] text-slate-400">ICAO e-Ticket Scannable Barcode</span>
+                    </div>
+                    <span className="font-mono text-xs font-extrabold text-[#052659]">
+                      Total Paid: ₹{viewingBooking.totalPrice}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  <Printer size={14} />
+                  <span>Print Pass</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewingBooking(null)}
+                  className="rounded-xl bg-[#052659] px-5 py-2 text-xs font-bold text-white hover:bg-[#021024]"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CANCEL CONFIRMATION DIALOG */}
+        {cancellingBookingId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+            <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-2xl space-y-4">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-200">
+                <RotateCcw size={22} />
+              </div>
+
+              <div>
+                <h3 className="text-base font-bold text-[#021024]">Cancel Flight Reservation?</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  This will void the Two-Phase Escrow hold with 100% full refund and release the assigned seats back to the carrier pool.
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={confirmCancelBooking}
+                  disabled={cancellingLoading}
+                  className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white hover:bg-rose-700 disabled:opacity-60"
+                >
+                  {cancellingLoading ? "Cancelling..." : "Confirm Cancellation"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCancellingBookingId(null)}
+                  className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  Keep Reservation
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       <Footer />

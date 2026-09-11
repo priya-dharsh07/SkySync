@@ -23,9 +23,9 @@ export default function Hero({ onExploreClick }: { onExploreClick?: () => void }
             className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50/80 px-3.5 py-1 text-xs font-semibold text-purple-800 shadow-sm backdrop-blur-sm"
           >
             <Sparkles size={12} className="text-purple-600" />
-            <span>Multi-Origin Global Convergence</span>
+            <span>Multi-Origin Group Travel</span>
             <span className="text-purple-300">•</span>
-            <span className="text-purple-700">Atomic Saga Engine</span>
+            <span className="text-purple-700">Synchronized Booking</span>
           </motion.div>
 
           {/* Heading */}
@@ -35,8 +35,8 @@ export default function Hero({ onExploreClick }: { onExploreClick?: () => void }
             transition={{ duration: 0.5, delay: 0.1 }}
             className="mt-6 text-4xl font-extrabold tracking-tight text-[#021024] sm:text-5xl lg:text-6xl leading-[1.12]"
           >
-            Distributed Travel. <br />
-            <span className="text-[#052659]">Synchronous Group Booking.</span>
+            Fly From Different Cities. <br />
+            <span className="text-[#052659]">Book & Arrive Together.</span>
           </motion.h1>
 
           {/* Subheading */}
@@ -46,9 +46,7 @@ export default function Hero({ onExploreClick }: { onExploreClick?: () => void }
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mt-5 text-sm leading-relaxed text-slate-600 sm:text-base max-w-2xl mx-auto"
           >
-            Traditional booking platforms fail when groups travel from different cities. SkySync executes a{" "}
-            <strong className="text-[#021024] font-semibold">Pareto multi-objective algorithm</strong> to discover the fairest meeting hubs, backed by a{" "}
-            <strong className="text-[#021024] font-semibold">distributed Transactional Saga Orchestrator</strong> that automatically voids all charges if any seat fails.
+            Planning a trip with friends or colleagues from different cities? SkySync coordinates traveler origins, discovers the fairest meeting destinations, and guarantees everyone gets confirmed together with zero stranded-ticket risk.
           </motion.p>
 
           {/* Action CTAs */}
@@ -72,8 +70,8 @@ export default function Hero({ onExploreClick }: { onExploreClick?: () => void }
               href="#engine-architecture"
               className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
-              <Lock size={14} className="text-slate-500" />
-              <span>Saga Architecture</span>
+              <ShieldCheck size={14} className="text-[#5483B3]" />
+              <span>How Group Booking Works</span>
             </a>
           </motion.div>
 
@@ -88,40 +86,40 @@ export default function Hero({ onExploreClick }: { onExploreClick?: () => void }
             <div className="rounded-xl border border-purple-100 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-1.5 text-purple-600">
                 <Sparkles size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Pareto Frontier</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Smart Matching</span>
               </div>
-              <p className="mt-1.5 text-base font-bold text-[#021024]">3-Objective</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">Minimizes Gini price disparity and arrival window gap.</p>
+              <p className="mt-1.5 text-base font-bold text-[#021024]">Fair Cost Split</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Finds destinations with balanced fares and close arrival times.</p>
             </div>
 
             {/* Atomic: Emerald */}
             <div className="rounded-xl border border-emerald-100 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-1.5 text-emerald-600">
                 <ShieldCheck size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Atomic Guarantee</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Group Synchronized</span>
               </div>
-              <p className="mt-1.5 text-base font-bold text-[#021024]">100% or 0%</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">All members confirm together or everyone voids cleanly.</p>
+              <p className="mt-1.5 text-base font-bold text-[#021024]">All Together</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Everyone gets confirmed together with zero partial-booking risk.</p>
             </div>
 
             {/* Locks: Amber */}
             <div className="rounded-xl border border-amber-100 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-1.5 text-amber-600">
                 <Lock size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Redis Redlock</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Guaranteed Fare Lock</span>
               </div>
-              <p className="mt-1.5 text-base font-bold text-[#021024]">TTL Locks</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">Holds seats synchronously while all members authenticate.</p>
+              <p className="mt-1.5 text-base font-bold text-[#021024]">15-Min Hold</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Holds seats and prices securely while all members checkout.</p>
             </div>
 
             {/* Rollback: Coral */}
             <div className="rounded-xl border border-rose-100 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-1.5 text-rose-600">
                 <RotateCcw size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Compensating</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">100% Risk Free</span>
               </div>
-              <p className="mt-1.5 text-base font-bold text-[#021024]">Zero Liability</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">Automatic rollback voids all escrow holds instantly.</p>
+              <p className="mt-1.5 text-base font-bold text-[#021024]">Full Protection</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Instant, hassle-free refund if any flight in the itinerary is unavailable.</p>
             </div>
           </motion.div>
         </div>

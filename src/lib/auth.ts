@@ -27,6 +27,11 @@ export async function getCurrentUser() {
       id: user._id.toString(),
       name: user.name,
       email: user.email,
+      homeAirport: user.homeAirport || "DEL",
+      homeCity: user.homeCity || "New Delhi",
+      country: user.country || "India",
+      lat: user.lat ?? 28.5562,
+      lng: user.lng ?? 77.1000,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

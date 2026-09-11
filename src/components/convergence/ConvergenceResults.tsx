@@ -7,7 +7,8 @@ import {
   ArrowRight, 
   ChevronDown, 
   ChevronUp, 
-  Lock
+  Lock,
+  Plane
 } from "lucide-react";
 import { ConvergenceDestination } from "@/lib/convergence/pareto";
 
@@ -67,10 +68,10 @@ export default function ConvergenceResults({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-[#021024]">
-            Pareto-Optimal Convergence Hubs
+            Recommended Meeting Destinations
           </h3>
           <p className="text-xs text-slate-500">
-            Discovered {destinations.length} candidate hubs ranked by minimal disparity and arrival alignment.
+            {destinations.length} destinations ranked by lowest average fare and closest arrival times.
           </p>
         </div>
       </div>
@@ -104,7 +105,7 @@ export default function ConvergenceResults({
                       </h4>
                       {dest.isParetoOptimal && (
                         <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700">
-                          <Award size={11} /> Pareto Rank 1
+                          <Award size={11} /> Top Match
                         </span>
                       )}
                     </div>
@@ -117,9 +118,9 @@ export default function ConvergenceResults({
                 {/* Score & Button */}
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <div className="text-[10px] uppercase font-bold text-slate-400">Fairness Index</div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Group Match</div>
                     <div className="text-base font-extrabold text-[#052659]">
-                      {dest.compositeFairnessScore} <span className="text-xs font-normal text-slate-400">/ 100</span>
+                      {dest.compositeFairnessScore}%
                     </div>
                   </div>
 
@@ -136,8 +137,8 @@ export default function ConvergenceResults({
                       <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     ) : (
                       <>
-                        <Lock size={12} className="text-blue-300" />
-                        <span>Lock Booking</span>
+                        <Plane size={13} className="text-blue-300" />
+                        <span>Book Group Trip</span>
                         <ArrowRight size={12} />
                       </>
                     )}
@@ -148,9 +149,9 @@ export default function ConvergenceResults({
               {/* Metrics Grid */}
               <div className="mt-4 grid grid-cols-2 gap-2.5 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs sm:grid-cols-4">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Price Disparity</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Price Variance</span>
                   <p className="mt-0.5 font-bold text-[#052659] font-mono text-xs">
-                    ±${dest.priceStandardDeviation} <span className="text-[10px] font-normal text-slate-500">(Gini: {dest.priceGiniCoefficient})</span>
+                    ±${dest.priceStandardDeviation} <span className="text-[10px] font-normal text-slate-500">(Fair Split)</span>
                   </p>
                 </div>
 

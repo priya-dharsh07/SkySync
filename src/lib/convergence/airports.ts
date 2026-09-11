@@ -87,3 +87,19 @@ export function haversineDistance(lat1: number, lon1: number, lat2: number, lon2
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c);
 }
+
+// Find closest airport from coordinates (e.g. from browser Geolocation API)
+export function findNearestAirport(lat: number, lng: number): { airport: Airport; distanceKm: number } {
+  let best = AIRPORTS[0];
+  let minDistance = Infinity;
+
+  for (const a of AIRPORTS) {
+    const d = haversineDistance(lat, lng, a.lat, a.lng);
+    if (d < minDistance) {
+      minDistance = d;
+      best = a;
+    }
+  }
+
+  return { airport: best, distanceKm: minDistance };
+}

@@ -119,7 +119,7 @@ export default function Navbar() {
             className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-[#052659]"
           >
             <Layers size={14} className="text-slate-400" />
-            Saga Architecture
+            How It Works
           </Link>
 
           <Link
@@ -127,7 +127,7 @@ export default function Navbar() {
             className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-[#052659]"
           >
             <ShieldCheck size={14} className="text-emerald-500" />
-            Zero-Risk Escrow
+            Price Guarantee
           </Link>
         </nav>
 
@@ -221,7 +221,7 @@ export default function Navbar() {
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-50"
             >
-              <Layers size={15} className="text-slate-400" /> Saga Architecture
+              <Layers size={15} className="text-slate-400" /> How It Works
             </Link>
             <div className="my-1 border-t border-slate-100" />
             {user ? (
