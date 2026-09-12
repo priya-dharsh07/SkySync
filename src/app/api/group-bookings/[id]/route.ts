@@ -186,9 +186,8 @@ export async function PATCH(
           firstName: registeredUser.name.split(" ")[0] || "Traveler",
           lastName: registeredUser.name.split(" ").slice(1).join(" ") || "",
           email: registeredUser.email,
-          phone: "+91 98401 23456",
+          phone: "",
           passportCountry: registeredUser.country === "India" ? "IND" : "USA",
-          visaStatus: "VERIFIED_OK",
         },
         passengerDetailsComplete: false,
         paymentStatus: "UNPAID",
@@ -463,18 +462,11 @@ export async function PATCH(
         })),
       };
 
-      // Populate member flights from top hub
+      // Keep member flights unassigned so users explicitly select flights in Step 4
       group.members = group.members.map((m: any) => {
-        const flightPlan = topHub.memberFlights.find(
-          (mf) =>
-            mf.travelerId === m.userId ||
-            mf.travelerId === m.email ||
-            mf.originAirport.code === m.originAirport?.code
-        );
-
         return {
           ...m,
-          flight: flightPlan?.flight || m.flight,
+          flight: m.flight || undefined,
         };
       });
 
@@ -601,6 +593,48 @@ export async function PATCH(
           paymentMode === "INDIVIDUAL"
             ? "Option 1 Selected: Each traveler pays for their own flight."
             : "Option 2 Selected: Organizer pays for the entire group.",
+        group: updated,
+      });
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: SELECT_MEMBER_FLIGHT (Assign individual flight to traveler)
+    // -------------------------------------------------------------
+    if (action === "SELECT_MEMBER_FLIGHT") {
+      const { memberEmail, flight } = body;
+      const targetEmail = memberEmail ? memberEmail.toLowerCase() : user.email.toLowerCase();
+
+      if (!isOrganizer && targetEmail !== user.email.toLowerCase()) {
+        return NextResponse.json(
+          { success: false, message: "You can only select flights for yourself unless you are the organizer." },
+          { status: 403 }
+        );
+      }
+
+      const idx = group.members.findIndex(
+        (m: any) => m.email.toLowerCase() === targetEmail
+      );
+
+      if (idx < 0) {
+        return NextResponse.json(
+          { success: false, message: "Traveler not found in group." },
+          { status: 404 }
+        );
+      }
+
+      if (!flight || !flight.flightNumber) {
+        return NextResponse.json(
+          { success: false, message: "Invalid flight details provided." },
+          { status: 400 }
+        );
+      }
+
+      group.members[idx].flight = flight;
+      const updated = await saveGroupBooking(group);
+
+      return NextResponse.json({
+        success: true,
+        message: `Flight ${flight.flightNumber} selected for ${group.members[idx].name}.`,
         group: updated,
       });
     }
@@ -771,15 +805,15 @@ export async function PATCH(
             firstName: member.passengerDetails?.firstName || member.name.split(" ")[0] || "Traveler",
             lastName: member.passengerDetails?.lastName || member.name.split(" ").slice(1).join(" ") || "",
             email: member.email,
-            phone: member.passengerDetails?.phone || "+91 98401 23456",
-            passportNumber: member.passengerDetails?.passportNumber || `Z${Math.floor(1000000 + Math.random() * 9000000)}`,
+            phone: member.passengerDetails?.phone || "",
+            passportNumber: member.passengerDetails?.passportNumber || "",
             passportCountry: member.passengerDetails?.passportCountry || "IND",
-            passportExpiry: member.passengerDetails?.passportExpiry || "2032-11-20",
-            visaStatus: member.passengerDetails?.visaStatus || "VERIFIED_OK",
+            passportExpiry: member.passengerDetails?.passportExpiry || "",
+            visaStatus: member.passengerDetails?.visaStatus || "NOT_REQUIRED",
           },
         ],
         selectedSeats: [body.seat || member.selectedSeat || "14A"],
-        totalPrice: flight.priceUsd || 4950,
+        totalPrice: flight.priceUsd || flight.price || 4950,
         escrowStatus: "CAPTURED",
         status: "CONFIRMED",
         paymentCardLast4: String(paymentCardLast4).slice(-4),
@@ -832,11 +866,17 @@ export async function PATCH(
 
       const { paymentCardLast4 = "4242" } = body;
 
-      // Ensure every member has a flight
+      // Ensure every member has an explicitly selected flight and seat
       for (const m of group.members) {
-        if (!m.flight) {
+        if (!m.flight || !m.flight.flightNumber) {
           return NextResponse.json(
-            { success: false, message: `Traveler ${m.name} does not have an assigned flight.` },
+            { success: false, message: `Traveler ${m.name} has not selected a flight itinerary yet.` },
+            { status: 400 }
+          );
+        }
+        if (!m.selectedSeat) {
+          return NextResponse.json(
+            { success: false, message: `Traveler ${m.name} must select a seat on the cabin seat map before completing payment.` },
             { status: 400 }
           );
         }
@@ -844,12 +884,11 @@ export async function PATCH(
 
       // Generate distinct Booking records for EACH member
       const createdBookings = [];
-      const defaultSeats = ["12A", "12B", "12C", "14A", "14B", "14C", "15A", "15B"];
 
       for (let i = 0; i < group.members.length; i++) {
         const member = group.members[i];
         const flight = member.flight;
-        const seat = member.selectedSeat || defaultSeats[i % defaultSeats.length];
+        const seat = member.selectedSeat;
 
         const bookingRef = `SKY-GRP-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
         const eTicket = `ETKT-SS-${Math.floor(100000 + Math.random() * 900000)}-${flight.origin?.code || "DEP"}`;
@@ -879,15 +918,15 @@ export async function PATCH(
               firstName: member.passengerDetails?.firstName || member.name.split(" ")[0] || "Traveler",
               lastName: member.passengerDetails?.lastName || member.name.split(" ").slice(1).join(" ") || "",
               email: member.email,
-              phone: member.passengerDetails?.phone || "+91 98401 23456",
-              passportNumber: member.passengerDetails?.passportNumber || `Z${Math.floor(1000000 + Math.random() * 9000000)}`,
+              phone: member.passengerDetails?.phone || "",
+              passportNumber: member.passengerDetails?.passportNumber || "",
               passportCountry: member.passengerDetails?.passportCountry || "IND",
-              passportExpiry: member.passengerDetails?.passportExpiry || "2032-11-20",
-              visaStatus: member.passengerDetails?.visaStatus || "VERIFIED_OK",
+              passportExpiry: member.passengerDetails?.passportExpiry || "",
+              visaStatus: member.passengerDetails?.visaStatus || "NOT_REQUIRED",
             },
           ],
           selectedSeats: [seat],
-          totalPrice: flight.priceUsd || 4950,
+          totalPrice: flight.priceUsd || flight.price || 4950,
           escrowStatus: "CAPTURED",
           status: "CONFIRMED",
           paymentCardLast4: String(paymentCardLast4).slice(-4),

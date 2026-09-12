@@ -89,16 +89,22 @@ export async function POST(request: Request) {
       lng: matchedAirport.lng,
     });
 
+    // Fresh database query verification
+    const verifiedUser = await findUserByEmail(normalizedEmail);
+    if (!verifiedUser) {
+      throw new Error("User record verification failed after persistence attempt.");
+    }
+
     return NextResponse.json(
       {
         message: "Account created successfully.",
         user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          homeAirport: user.homeAirport,
-          homeCity: user.homeCity,
-          country: user.country,
+          id: verifiedUser.id,
+          name: verifiedUser.name,
+          email: verifiedUser.email,
+          homeAirport: verifiedUser.homeAirport,
+          homeCity: verifiedUser.homeCity,
+          country: verifiedUser.country,
         },
       },
       {

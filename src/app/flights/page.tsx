@@ -18,8 +18,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import PageBackground from "@/components/layout/PageBackground";
-import flightsBg from "@/bgs/image2.png";
 
 import { AIRPORTS, Airport as AirportItem } from "@/lib/convergence/airports";
 
@@ -219,35 +217,21 @@ export default function FlightsPage() {
 
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
-      <PageBackground
-        image={flightsBg}
-        alt="Flights Background"
-      />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
         {/* Scenic Flight Search Banner */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 mb-6 p-6 sm:p-8 shadow-md text-white">
-          <div className="absolute inset-0 z-0 select-none">
-            <Image
-              src={flightsBg}
-              alt="SkySync Global Flights"
-              fill
-              priority
-              className="object-cover object-center scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/90 via-[#052659]/80 to-[#021024]/75" />
-          </div>
+        <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-[#021024] via-[#052659] to-[#021024] mb-6 p-6 sm:p-8 shadow-md text-white">
 
           <div className="relative z-10 max-w-2xl">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-white/10 px-3 py-0.5 text-[11px] font-bold text-[#C1E8FF] backdrop-blur-md">
               <Plane size={13} />
               <span>Real-Time Airline Schedule Search</span>
             </div>
-            <h1 className="mt-2 text-2xl font-extrabold text-white sm:text-3xl">
+            <h1 style={{ color: "#ffffff" }} className="mt-2 text-2xl font-black text-white !text-white drop-shadow-md sm:text-3xl">
               Explore Live Scheduled Flights
             </h1>
-            <p className="mt-1 text-xs text-blue-100/85">
+            <p className="mt-1 text-xs text-blue-100/90 font-medium">
               Compare non-stop and connecting routes across leading international carriers with verified seat allocations.
             </p>
           </div>
@@ -541,6 +525,52 @@ export default function FlightsPage() {
             )}
           </div>
         </div>
+
+        {/* Convergence Engine Architecture Section */}
+        <section id="engine-architecture" className="mt-16 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#5483B3]">
+            <SlidersHorizontal size={14} />
+            <span>Algorithmic Architecture</span>
+          </div>
+          <h2 className="mt-2 text-2xl font-extrabold text-[#021024] sm:text-3xl">
+            Pareto Convergence Engine Architecture
+          </h2>
+          <p className="mt-2 text-xs text-slate-600 max-w-3xl leading-relaxed">
+            SkySync's core routing engine uses multi-objective Pareto optimization to resolve multi-origin travel scheduling conflicts across distributed group members. By balancing arrival time variance, individual ticket fares, and total travel time, the system computes the global spatial center-of-mass meeting hub.
+          </p>
+
+          <div className="mt-8 grid gap-6 sm:grid-cols-3">
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 space-y-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#052659] text-white font-mono text-xs font-bold">
+                01
+              </div>
+              <h3 className="text-sm font-bold text-[#021024]">Spatial Center of Mass</h3>
+              <p className="text-xs text-slate-500 leading-normal">
+                Calculates geodesic coordinates and flight distance bounds for all group origins.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 space-y-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#052659] text-white font-mono text-xs font-bold">
+                02
+              </div>
+              <h3 className="text-sm font-bold text-[#021024]">Fare Equity & Window Alignment</h3>
+              <p className="text-xs text-slate-500 leading-normal">
+                Minimizes variance in price distribution and landing windows across international carriers.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 space-y-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#052659] text-white font-mono text-xs font-bold">
+                03
+              </div>
+              <h3 className="text-sm font-bold text-[#021024]">Real-Time Database Sync</h3>
+              <p className="text-xs text-slate-500 leading-normal">
+                All selected itineraries, passenger profiles, and seat assignments are persisted directly to MongoDB Atlas.
+              </p>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />

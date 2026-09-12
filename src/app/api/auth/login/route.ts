@@ -41,9 +41,6 @@ export async function POST(request: Request) {
       } catch {
         passwordMatch = password === user.password;
       }
-    } else {
-      // Seed user without password: allow any password or set on first login
-      passwordMatch = true;
     }
 
     if (!passwordMatch) {
