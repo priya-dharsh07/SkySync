@@ -21,15 +21,13 @@ import {
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import PageBackground from "@/components/layout/PageBackground";
-import seatsBg from "@/bgs/image6.png";
 import { getAircraftLayoutForFlight, AircraftLayout, SeatItem } from "@/lib/seats/aircraftLayouts";
 
 export default function SelectSeatsPage() {
   const [flight, setFlight] = useState<any>(null);
   const [passengers, setPassengers] = useState<any[]>([]);
   const [activePassengerIdx, setActivePassengerIdx] = useState(0);
-  const [is3DMode, setIs3DMode] = useState(true);
+  const [is3DMode, setIs3DMode] = useState(false);
   const [selectedSeats, setSelectedSeats] = useState<Record<number, string>>({});
   const [hoveredSeat, setHoveredSeat] = useState<SeatItem | null>(null);
   const [holdTtlSeconds, setHoldTtlSeconds] = useState(599); // 10-minute hold
@@ -160,12 +158,6 @@ export default function SelectSeatsPage() {
 
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
-      <PageBackground
-        image={seatsBg}
-        alt="Seat Selection Cabin Background"
-        opacityClass="opacity-[0.14]"
-        overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
-      />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 pt-24 pb-20 sm:px-6 lg:px-8">
@@ -192,18 +184,8 @@ export default function SelectSeatsPage() {
           </div>
         </div>
 
-        {/* Scenic Cabin Visual Banner */}
-        <div className="relative overflow-hidden mt-6 rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-md text-white">
-          <div className="absolute inset-0 z-0 select-none">
-            <Image
-              src={seatsBg}
-              alt="Aircraft Cabin Interior"
-              fill
-              priority
-              className="object-cover object-center scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/92 via-[#052659]/85 to-[#021024]/75" />
-          </div>
+        {/* Cabin Visual Banner */}
+        <div className="relative overflow-hidden mt-6 rounded-3xl border border-slate-800 bg-gradient-to-r from-[#021024] via-[#052659] to-[#021024] p-6 sm:p-8 shadow-md text-white">
 
           <div className="relative z-10 flex flex-wrap items-end justify-between gap-4">
             <div>
