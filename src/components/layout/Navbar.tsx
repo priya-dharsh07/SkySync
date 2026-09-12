@@ -12,6 +12,7 @@ import {
   Compass,
   Layers,
   Sparkles,
+  Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -107,6 +108,14 @@ export default function Navbar() {
           </Link>
 
           <Link
+            href="/group-booking"
+            className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-[#052659]"
+          >
+            <Users size={14} className="text-[#5483B3]" />
+            Group Booking
+          </Link>
+
+          <Link
             href="/flights"
             className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-[#052659]"
           >
@@ -159,7 +168,14 @@ export default function Navbar() {
                     onClick={() => setProfileOpen(false)}
                     className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    <User size={14} className="text-slate-400" /> My Profile
+                    <User size={14} className="text-slate-400" /> My Profile & Bookings
+                  </Link>
+                  <Link
+                    href="/group-booking"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <Users size={14} className="text-slate-400" /> Group Trips
                   </Link>
                   <button
                     type="button"
@@ -208,6 +224,13 @@ export default function Navbar() {
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-[#052659] hover:bg-slate-50"
             >
               <Compass size={15} className="text-[#5483B3]" /> Convergence Finder
+            </Link>
+            <Link
+              href="/group-booking"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 font-bold hover:bg-slate-50"
+            >
+              <Users size={15} className="text-[#5483B3]" /> Group Booking
             </Link>
             <Link
               href="/flights"
