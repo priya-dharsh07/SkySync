@@ -8,8 +8,6 @@ import FlightTrajectoryMap from "@/components/convergence/FlightTrajectoryMap";
 import ParetoFrontierChart from "@/components/convergence/ParetoFrontierChart";
 import ConvergenceResults from "@/components/convergence/ConvergenceResults";
 import Footer from "@/components/layout/Footer";
-import PageBackground from "@/components/layout/PageBackground";
-import landingBg from "@/bgs/landing.jpg";
 import { ConvergenceDestination, OptimizationWeights, TravelerOrigin } from "@/lib/convergence/pareto";
 import { 
   ShieldCheck, 
@@ -55,42 +53,11 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
-      <PageBackground
-        image={landingBg}
-        alt="SkySync Flight Convergence"
-        opacityClass="opacity-[0.16]"
-        overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
-      />
       <Navbar />
 
       <main className="relative z-10">
         {/* HERO SECTION */}
-        <Hero onExploreClick={scrollToSearch} />
-
-        {/* MULTI-ORIGIN SEARCH & CONVERGENCE SECTION */}
-        <section ref={searchSectionRef} className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          <MultiOriginSearch onSearch={handleExecuteSearch} loading={loading} />
-
-          {/* RESULTS VISUALIZATION */}
-          {selectedDestination && destinations.length > 0 && (
-            <div className="mt-10 space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                <FlightTrajectoryMap destination={selectedDestination} />
-                <ParetoFrontierChart
-                  destinations={destinations}
-                  selectedDestination={selectedDestination}
-                  onSelect={(d) => setSelectedDestination(d)}
-                />
-              </div>
-
-              <ConvergenceResults
-                destinations={destinations}
-                selectedDestination={selectedDestination}
-                onSelect={(d) => setSelectedDestination(d)}
-              />
-            </div>
-          )}
-        </section>
+        <Hero onExploreClick={() => { window.location.href = "/group-booking"; }} />
 
         {/* GROUP TRAVEL EXPERIENCE & COMPARISON */}
         <section id="engine-architecture" className="border-t border-slate-200 bg-white py-20">

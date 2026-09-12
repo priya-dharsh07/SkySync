@@ -30,8 +30,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import PageBackground from "@/components/layout/PageBackground";
-import paymentBg from "@/bgs/image3.png";
 
 type PaymentMethodType = "CARD" | "UPI" | "NETBANKING" | "WALLET";
 type TransactionStatus = "IDLE" | "PROCESSING" | "SUCCESS" | "FAILED" | "TIMEOUT";
@@ -55,11 +53,11 @@ export default function PaymentPage() {
 
   // Payment Form State
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType>("CARD");
-  const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242");
-  const [cardHolder, setCardHolder] = useState("PRIYADHARSHINI S");
-  const [cardExpiry, setCardExpiry] = useState("12/28");
-  const [cardCvc, setCardCvc] = useState("888");
-  const [upiId, setUpiId] = useState("priya@okhdfc");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardHolder, setCardHolder] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
+  const [upiId, setUpiId] = useState("");
   const [selectedBank, setSelectedBank] = useState("apex");
 
   // Transaction state machine
@@ -163,93 +161,54 @@ export default function PaymentPage() {
         }
       }
 
-      // Happy path: Persist real booking into MongoDB via /api/bookings
-      try {
-        const safeFlight = flight || {
-          flightNumber: "AI-204",
-          airline: "Air India",
-          airlineCode: "AI",
-          origin: "New Delhi",
-          originCode: "DEL",
-          destination: "Mumbai",
-          destinationCode: "BOM",
-          departureDate: "2026-10-15",
-          departureTime: "08:15",
-          arrivalTime: "10:30",
-          price: 4950,
-        };
+      // Validate: no flight = fail cleanly
+        if (!flight) {
+          clearInterval(interval);
+          setTxStatus("FAILED");
+          return;
+        }
+        if (!passengers || passengers.length === 0) {
+          clearInterval(interval);
+          setTxStatus("FAILED");
+          return;
+        }
 
-        const safePassengers = passengers.length > 0 ? passengers : [
-          {
-            firstName: "Priyadharshini",
-            lastName: "Sundaram",
-            email: "priya@example.com",
-            phone: "+91 98765 43210",
-            passportNumber: "Z9482104",
-            passportCountry: "IND",
-            passportExpiry: "2032-11-20",
-          }
-        ];
+        // Persist real booking into MongoDB via /api/bookings
+        try {
+          const last4Digits = cardNumber.replace(/\s+/g, "").slice(-4) || "0000";
 
-        const last4Digits = cardNumber.replace(/\s+/g, "").slice(-4) || "4242";
-
-        const res = await fetch("/api/bookings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            flight: safeFlight,
-            passengers: safePassengers,
-            selectedSeats: selectedSeats.length > 0 ? selectedSeats : ["14A"],
-            totalPrice: grandTotal,
-            paymentCardLast4: last4Digits,
-          }),
-        });
-
-        const data = await res.json();
-        if (data.success && data.booking) {
-          setCompletedBooking(data.booking);
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem("lastBooking", JSON.stringify(data.booking));
-          }
-          setTxStatus("SUCCESS");
-          confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
+          const res = await fetch("/api/bookings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              flight,
+              passengers,
+              selectedSeats: selectedSeats.length > 0 ? selectedSeats : [],
+              totalPrice: grandTotal,
+              paymentCardLast4: last4Digits,
+            }),
           });
-        } else {
-          throw new Error(data.message || "Failed to finalize booking");
+
+          const data = await res.json();
+          if (data.success && data.booking) {
+            setCompletedBooking(data.booking);
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("lastBooking", JSON.stringify(data.booking));
+            }
+            setTxStatus("SUCCESS");
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+            });
+          } else {
+            throw new Error(data.message || "Booking creation failed.");
+          }
+        } catch (err) {
+          console.error("Payment settlement error:", err);
+          setTxStatus("FAILED");
         }
-      } catch (err) {
-        console.error("Payment settlement error:", err);
-        // Fallback simulated booking so user experience is never blocked
-        const fallbackBooking = {
-          _id: `b-${Date.now()}`,
-          bookingReference: `SKY-${Math.random().toString(36).substring(2, 7).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
-          eTicketNumber: `ETKT-SS-${Math.floor(100000 + Math.random() * 900000)}-${flight?.originCode || "DEL"}`,
-          flightNumber: flight?.flightNumber || "AI-204",
-          airline: flight?.airline || "SkySync Airways",
-          origin: flight?.origin || "New Delhi",
-          originCode: flight?.originCode || "DEL",
-          destination: flight?.destination || "Mumbai",
-          destinationCode: flight?.destinationCode || "BOM",
-          departureDate: flight?.departureDate || "2026-10-15",
-          departureTime: flight?.departureTime || "08:15",
-          arrivalTime: flight?.arrivalTime || "10:30",
-          passengers: passengers,
-          selectedSeats: selectedSeats.length > 0 ? selectedSeats : ["14A"],
-          totalPrice: grandTotal,
-          paymentCardLast4: cardNumber.slice(-4) || "4242",
-          createdAt: new Date().toISOString(),
-        };
-        setCompletedBooking(fallbackBooking);
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem("lastBooking", JSON.stringify(fallbackBooking));
-        }
-        setTxStatus("SUCCESS");
-        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
-      }
     }, 3200);
   }
 
@@ -262,12 +221,6 @@ export default function PaymentPage() {
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
       <div className="print:hidden">
-        <PageBackground
-          image={paymentBg}
-          alt="Payment Checkout Background"
-          opacityClass="opacity-[0.14]"
-          overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
-        />
         <Navbar />
       </div>
 
@@ -799,18 +752,8 @@ export default function PaymentPage() {
 
             {/* Right Column: Flight Order Summary & Itemized Breakdown */}
             <aside className="space-y-4">
-              {/* Photographic Flight Journey Preview Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 p-4 shadow-sm text-white min-h-[140px] flex flex-col justify-end">
-                <div className="absolute inset-0 z-0 select-none">
-                  <Image
-                    src={paymentBg}
-                    alt="Flight Journey Route"
-                    fill
-                    priority
-                    className="object-cover object-center scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#021024]/95 via-[#052659]/75 to-transparent" />
-                </div>
+              {/* Flight Journey Preview Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-r from-[#021024] to-[#052659] p-4 shadow-sm text-white min-h-[140px] flex flex-col justify-end">
                 <div className="relative z-10">
                   <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-mono text-[9px] font-bold text-white border border-white/20 backdrop-blur-md uppercase">
                     Direct Route • Verified Seat Hold

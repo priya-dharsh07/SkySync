@@ -92,22 +92,6 @@ interface StoreSchema {
 const DATA_DIR = path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "db_store.json");
 
-// Pre-existing verified primary user for login; all other travelers must be genuinely registered
-const SEED_USERS: StoredUser[] = [
-  {
-    id: "usr-priya-01",
-    name: "Priyadharshini Sundaram",
-    email: "priya@example.com",
-    homeAirport: "DEL",
-    homeCity: "New Delhi",
-    country: "India",
-    lat: 28.5562,
-    lng: 77.1,
-    createdAt: "2026-01-10T10:00:00.000Z",
-    updatedAt: "2026-01-10T10:00:00.000Z",
-  },
-];
-
 function readLocalStore(): StoreSchema {
   try {
     if (!fs.existsSync(DATA_DIR)) {
@@ -115,7 +99,7 @@ function readLocalStore(): StoreSchema {
     }
     if (!fs.existsSync(DATA_FILE)) {
       const initial: StoreSchema = {
-        users: SEED_USERS,
+        users: [],
         bookings: [],
         groupBookings: [],
       };
@@ -124,14 +108,14 @@ function readLocalStore(): StoreSchema {
     }
     const raw = fs.readFileSync(DATA_FILE, "utf-8");
     const parsed = JSON.parse(raw);
-    if (!parsed.users || parsed.users.length === 0) {
-      parsed.users = SEED_USERS;
-      writeLocalStore(parsed);
-    }
-    return parsed;
+    return {
+      users: Array.isArray(parsed.users) ? parsed.users : [],
+      bookings: Array.isArray(parsed.bookings) ? parsed.bookings : [],
+      groupBookings: Array.isArray(parsed.groupBookings) ? parsed.groupBookings : [],
+    };
   } catch (err) {
     console.error("readLocalStore error:", err);
-    return { users: SEED_USERS, bookings: [], groupBookings: [] };
+    return { users: [], bookings: [], groupBookings: [] };
   }
 }
 
@@ -146,6 +130,75 @@ function writeLocalStore(store: StoreSchema) {
   }
 }
 
+function mapUserDoc(doc: any): StoredUser {
+  return {
+    id: doc._id ? doc._id.toString() : doc.id,
+    name: doc.name,
+    email: doc.email,
+    password: doc.password,
+    homeAirport: doc.homeAirport || "DEL",
+    homeCity: doc.homeCity || "New Delhi",
+    country: doc.country || "India",
+    lat: doc.lat ?? 28.5562,
+    lng: doc.lng ?? 77.1,
+    createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
+    updatedAt: doc.updatedAt ? new Date(doc.updatedAt).toISOString() : new Date().toISOString(),
+  };
+}
+
+function mapBookingDoc(doc: any): StoredBooking {
+  return {
+    _id: doc._id ? doc._id.toString() : doc.id,
+    userId: doc.userId,
+    userEmail: doc.userEmail?.toLowerCase(),
+    groupId: doc.groupId,
+    groupBookingId: doc.groupBookingId,
+    groupName: doc.groupName,
+    isGroupBooking: doc.isGroupBooking || false,
+    travelerRole: doc.travelerRole,
+    bookingReference: doc.bookingReference,
+    eTicketNumber: doc.eTicketNumber,
+    flightNumber: doc.flightNumber,
+    airline: doc.airline,
+    airlineCode: doc.airlineCode,
+    origin: doc.origin,
+    originCode: doc.originCode,
+    destination: doc.destination,
+    destinationCode: doc.destinationCode,
+    departureDate: doc.departureDate,
+    departureTime: doc.departureTime,
+    arrivalTime: doc.arrivalTime,
+    passengers: doc.passengers || [],
+    selectedSeats: doc.selectedSeats || [],
+    totalPrice: doc.totalPrice,
+    escrowStatus: doc.escrowStatus || "CAPTURED",
+    status: doc.status || "CONFIRMED",
+    paymentCardLast4: doc.paymentCardLast4 || "4242",
+    createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
+    updatedAt: doc.updatedAt ? new Date(doc.updatedAt).toISOString() : new Date().toISOString(),
+  };
+}
+
+function mapGroupBookingDoc(doc: any): StoredGroupBooking {
+  return {
+    _id: doc._id ? doc._id.toString() : doc.groupId,
+    groupId: doc.groupId,
+    groupName: doc.groupName,
+    organizerId: doc.organizerId,
+    organizerEmail: doc.organizerEmail?.toLowerCase(),
+    organizerName: doc.organizerName,
+    status: doc.status,
+    paymentMode: doc.paymentMode,
+    destination: doc.destination,
+    targetDate: doc.targetDate,
+    members: doc.members || [],
+    totalPrice: doc.totalPrice || 0,
+    optimizationMetrics: doc.optimizationMetrics,
+    createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
+    updatedAt: doc.updatedAt ? new Date(doc.updatedAt).toISOString() : new Date().toISOString(),
+  };
+}
+
 // ----------------- USER HELPERS -----------------
 
 export async function findUsers(query?: string): Promise<StoredUser[]> {
@@ -154,34 +207,21 @@ export async function findUsers(query?: string): Promise<StoredUser[]> {
     if (conn && conn.connection.readyState === 1) {
       const filter: Record<string, unknown> = {};
       if (query && query.trim()) {
+        const q = query.trim();
         filter.$or = [
-          { name: { $regex: query, $options: "i" } },
-          { email: { $regex: query, $options: "i" } },
-          { homeCity: { $regex: query, $options: "i" } },
-          { homeAirport: { $regex: query, $options: "i" } },
+          { name: { $regex: q, $options: "i" } },
+          { email: { $regex: q, $options: "i" } },
+          { homeCity: { $regex: q, $options: "i" } },
+          { homeAirport: { $regex: q, $options: "i" } },
         ];
       }
-      const docs = await User.find(filter).limit(25).lean();
-      if (docs && docs.length > 0) {
-        return docs.map((d: any) => ({
-          id: d._id.toString(),
-          name: d.name,
-          email: d.email,
-          homeAirport: d.homeAirport || "DEL",
-          homeCity: d.homeCity || "New Delhi",
-          country: d.country || "India",
-          lat: d.lat ?? 28.5562,
-          lng: d.lng ?? 77.1,
-          createdAt: d.createdAt?.toISOString() || new Date().toISOString(),
-          updatedAt: d.updatedAt?.toISOString() || new Date().toISOString(),
-        }));
-      }
+      const docs = await User.find(filter).sort({ createdAt: -1 }).limit(25).lean();
+      return (docs || []).map(mapUserDoc);
     }
   } catch (e) {
-    // Mongo unavailable, fallback smoothly
+    console.warn("findUsers MongoDB error, using fallback store:", e);
   }
 
-  // Fallback to local store
   const store = readLocalStore();
   let list = store.users;
   if (query && query.trim()) {
@@ -198,24 +238,17 @@ export async function findUsers(query?: string): Promise<StoredUser[]> {
 }
 
 export async function findUserById(id: string): Promise<StoredUser | null> {
+  if (!id) return null;
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
-      const doc: any = await User.findById(id).lean();
-      if (doc) {
-        return {
-          id: doc._id.toString(),
-          name: doc.name,
-          email: doc.email,
-          homeAirport: doc.homeAirport || "DEL",
-          homeCity: doc.homeCity || "New Delhi",
-          country: doc.country || "India",
-          lat: doc.lat ?? 28.5562,
-          lng: doc.lng ?? 77.1,
-          createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
-          updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
-        };
+      let doc = null;
+      try {
+        doc = await User.findById(id).lean();
+      } catch {
+        doc = await User.findOne({ _id: id }).lean();
       }
+      if (doc) return mapUserDoc(doc);
     }
   } catch (e) {}
 
@@ -224,26 +257,13 @@ export async function findUserById(id: string): Promise<StoredUser | null> {
 }
 
 export async function findUserByEmail(email: string): Promise<StoredUser | null> {
+  if (!email) return null;
   const norm = email.trim().toLowerCase();
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
-      const doc: any = await User.findOne({ email: norm }).lean();
-      if (doc) {
-        return {
-          id: doc._id.toString(),
-          name: doc.name,
-          email: doc.email,
-          password: doc.password,
-          homeAirport: doc.homeAirport || "DEL",
-          homeCity: doc.homeCity || "New Delhi",
-          country: doc.country || "India",
-          lat: doc.lat ?? 28.5562,
-          lng: doc.lng ?? 77.1,
-          createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
-          updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
-        };
-      }
+      const doc = await User.findOne({ email: norm }).lean();
+      if (doc) return mapUserDoc(doc);
     }
   } catch (e) {}
 
@@ -252,28 +272,31 @@ export async function findUserByEmail(email: string): Promise<StoredUser | null>
 }
 
 export async function saveUser(userData: Partial<StoredUser>): Promise<StoredUser> {
+  const normEmail = userData.email?.trim().toLowerCase();
   const store = readLocalStore();
-  const existingIndex = store.users.findIndex(
+
+  const existingIdx = store.users.findIndex(
     (u) =>
       (userData.id && u.id === userData.id) ||
-      (userData.email && u.email.toLowerCase() === userData.email.toLowerCase())
+      (normEmail && u.email.toLowerCase() === normEmail)
   );
 
   const now = new Date().toISOString();
   let updatedUser: StoredUser;
 
-  if (existingIndex >= 0) {
+  if (existingIdx >= 0) {
     updatedUser = {
-      ...store.users[existingIndex],
+      ...store.users[existingIdx],
       ...userData,
+      email: normEmail || store.users[existingIdx].email,
       updatedAt: now,
     };
-    store.users[existingIndex] = updatedUser;
+    store.users[existingIdx] = updatedUser;
   } else {
     updatedUser = {
       id: userData.id || `usr-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       name: userData.name || "SkySync Traveler",
-      email: userData.email || `user${Date.now()}@skysync.app`,
+      email: normEmail || `user${Date.now()}@skysync.app`,
       password: userData.password,
       homeAirport: (userData.homeAirport || "DEL").toUpperCase(),
       homeCity: userData.homeCity || "New Delhi",
@@ -283,17 +306,17 @@ export async function saveUser(userData: Partial<StoredUser>): Promise<StoredUse
       createdAt: now,
       updatedAt: now,
     };
-    store.users.push(updatedUser);
+    store.users.unshift(updatedUser);
   }
 
   writeLocalStore(store);
 
-  // Sync to Mongo if possible
+  // Sync to MongoDB if connected
   try {
     const conn = await connectDB();
-    if (conn && conn.connection.readyState === 1) {
-      await User.findOneAndUpdate(
-        { email: updatedUser.email },
+    if (conn && conn.connection.readyState === 1 && normEmail) {
+      const doc = await User.findOneAndUpdate(
+        { email: normEmail },
         {
           name: updatedUser.name,
           email: updatedUser.email,
@@ -304,10 +327,13 @@ export async function saveUser(userData: Partial<StoredUser>): Promise<StoredUse
           lat: updatedUser.lat,
           lng: updatedUser.lng,
         },
-        { upsert: true }
-      );
+        { upsert: true, new: true }
+      ).lean();
+      if (doc) return mapUserDoc(doc);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("saveUser MongoDB sync warning:", e);
+  }
 
   return updatedUser;
 }
@@ -319,7 +345,6 @@ export async function findBookings(userCriteria: {
   userEmail?: string;
 }): Promise<StoredBooking[]> {
   const normalizedEmail = userCriteria.userEmail?.trim().toLowerCase();
-
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
@@ -329,19 +354,9 @@ export async function findBookings(userCriteria: {
         orFilter.push({ userEmail: normalizedEmail });
         orFilter.push({ "passengers.email": normalizedEmail });
       }
-
-      const docs = await Booking.find(orFilter.length > 0 ? { $or: orFilter } : {})
-        .sort({ createdAt: -1 })
-        .lean();
-
-      if (docs && docs.length > 0) {
-        return docs.map((d: any) => ({
-          ...d,
-          _id: d._id.toString(),
-          createdAt: d.createdAt?.toISOString() || new Date().toISOString(),
-          updatedAt: d.updatedAt?.toISOString() || new Date().toISOString(),
-        }));
-      }
+      const query = orFilter.length > 0 ? { $or: orFilter } : {};
+      const docs = await Booking.find(query).sort({ createdAt: -1 }).lean();
+      return (docs || []).map(mapBookingDoc);
     }
   } catch (e) {}
 
@@ -359,18 +374,19 @@ export async function findBookings(userCriteria: {
 }
 
 export async function findBookingById(id: string): Promise<StoredBooking | null> {
+  if (!id) return null;
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
-      const doc: any = await Booking.findById(id).lean();
-      if (doc) {
-        return {
-          ...doc,
-          _id: doc._id.toString(),
-          createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
-          updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
-        };
+      let doc: any = null;
+      try {
+        doc = await Booking.findById(id).lean();
+      } catch {
+        doc = await Booking.findOne({
+          $or: [{ _id: id }, { bookingReference: id }, { eTicketNumber: id }],
+        }).lean();
       }
+      return doc ? mapBookingDoc(doc) : null;
     }
   } catch (e) {}
 
@@ -382,11 +398,20 @@ export async function saveBooking(bookingData: Partial<StoredBooking>): Promise<
   const store = readLocalStore();
   const now = new Date().toISOString();
 
-  const id =
-    bookingData._id ||
-    `bkg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  const id = bookingData._id || `bkg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  const bookingRef =
+    bookingData.bookingReference ||
+    `SKY-${Math.random().toString(36).substring(2, 7).toUpperCase()}-${Math.floor(
+      100 + Math.random() * 900
+    )}`;
 
-  const newBooking: StoredBooking = {
+  const eTicket =
+    bookingData.eTicketNumber ||
+    `ETKT-SS-${Math.floor(100000 + Math.random() * 900000)}-${
+      bookingData.originCode || "DEP"
+    }`;
+
+  const fieldsToSave: StoredBooking = {
     _id: id,
     userId: bookingData.userId,
     userEmail: bookingData.userEmail?.toLowerCase(),
@@ -395,16 +420,8 @@ export async function saveBooking(bookingData: Partial<StoredBooking>): Promise<
     groupName: bookingData.groupName,
     isGroupBooking: bookingData.isGroupBooking || false,
     travelerRole: bookingData.travelerRole,
-    bookingReference:
-      bookingData.bookingReference ||
-      `SKY-${Math.random().toString(36).substring(2, 7).toUpperCase()}-${Math.floor(
-        100 + Math.random() * 900
-      )}`,
-    eTicketNumber:
-      bookingData.eTicketNumber ||
-      `ETKT-SS-${Math.floor(100000 + Math.random() * 900000)}-${
-        bookingData.originCode || "DEP"
-      }`,
+    bookingReference: bookingRef,
+    eTicketNumber: eTicket,
     flightNumber: bookingData.flightNumber || "SS-101",
     airline: bookingData.airline || "SkySync Airways",
     airlineCode: bookingData.airlineCode || "SS",
@@ -427,26 +444,29 @@ export async function saveBooking(bookingData: Partial<StoredBooking>): Promise<
 
   const existingIdx = store.bookings.findIndex((b) => b._id === id);
   if (existingIdx >= 0) {
-    store.bookings[existingIdx] = newBooking;
+    store.bookings[existingIdx] = fieldsToSave;
   } else {
-    store.bookings.unshift(newBooking);
+    store.bookings.unshift(fieldsToSave);
   }
-
   writeLocalStore(store);
 
   // Sync to MongoDB if connected
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
-      await Booking.findOneAndUpdate(
-        { bookingReference: newBooking.bookingReference },
-        newBooking,
+      const { _id, ...cleanFields } = fieldsToSave;
+      const doc = await Booking.findOneAndUpdate(
+        { bookingReference: bookingRef },
+        { $set: cleanFields },
         { upsert: true, new: true }
-      );
+      ).lean();
+      if (doc) return mapBookingDoc(doc);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("saveBooking MongoDB sync error:", e);
+  }
 
-  return newBooking;
+  return fieldsToSave;
 }
 
 export async function updateBookingStatus(
@@ -456,25 +476,27 @@ export async function updateBookingStatus(
 ): Promise<StoredBooking | null> {
   const store = readLocalStore();
   const idx = store.bookings.findIndex((b) => b._id === id || b.bookingReference === id);
-  if (idx < 0) return null;
 
-  store.bookings[idx].status = status;
-  store.bookings[idx].escrowStatus = escrowStatus;
-  store.bookings[idx].updatedAt = new Date().toISOString();
-
-  writeLocalStore(store);
+  if (idx >= 0) {
+    store.bookings[idx].status = status;
+    store.bookings[idx].escrowStatus = escrowStatus;
+    store.bookings[idx].updatedAt = new Date().toISOString();
+    writeLocalStore(store);
+  }
 
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
-      await Booking.findByIdAndUpdate(id, {
-        status,
-        escrowStatus,
-      });
+      const doc = await Booking.findOneAndUpdate(
+        { $or: [{ _id: id }, { bookingReference: id }] },
+        { status, escrowStatus, updatedAt: new Date() },
+        { new: true }
+      ).lean();
+      if (doc) return mapBookingDoc(doc);
     }
   } catch (e) {}
 
-  return store.bookings[idx];
+  return idx >= 0 ? store.bookings[idx] : null;
 }
 
 // ----------------- GROUP BOOKING HELPERS -----------------
@@ -484,7 +506,6 @@ export async function findGroupBookings(userCriteria: {
   userEmail?: string;
 }): Promise<StoredGroupBooking[]> {
   const normalizedEmail = userCriteria.userEmail?.trim().toLowerCase();
-
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
@@ -498,18 +519,9 @@ export async function findGroupBookings(userCriteria: {
         orFilter.push({ "members.email": normalizedEmail });
       }
 
-      const docs = await GroupBooking.find(orFilter.length > 0 ? { $or: orFilter } : {})
-        .sort({ createdAt: -1 })
-        .lean();
-
-      if (docs && docs.length > 0) {
-        return docs.map((d: any) => ({
-          ...d,
-          _id: d._id.toString(),
-          createdAt: d.createdAt?.toISOString() || new Date().toISOString(),
-          updatedAt: d.updatedAt?.toISOString() || new Date().toISOString(),
-        }));
-      }
+      const query = orFilter.length > 0 ? { $or: orFilter } : {};
+      const docs = await GroupBooking.find(query).sort({ createdAt: -1 }).lean();
+      return (docs || []).map(mapGroupBookingDoc);
     }
   } catch (e) {}
 
@@ -532,20 +544,17 @@ export async function findGroupBookings(userCriteria: {
 }
 
 export async function findGroupBookingById(idOrGroupId: string): Promise<StoredGroupBooking | null> {
+  if (!idOrGroupId) return null;
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
-      const doc: any = await GroupBooking.findOne({
-        $or: [{ _id: idOrGroupId }, { groupId: idOrGroupId }],
-      }).lean();
-      if (doc) {
-        return {
-          ...doc,
-          _id: doc._id.toString(),
-          createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
-          updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
-        };
+      let doc: any = null;
+      try {
+        doc = await GroupBooking.findOne({ groupId: idOrGroupId }).lean();
+      } catch (e) {
+        console.warn("findGroupBookingById MongoDB error:", e);
       }
+      if (doc) return mapGroupBookingDoc(doc);
     }
   } catch (e) {}
 
@@ -595,18 +604,24 @@ export async function saveGroupBooking(
   } else {
     store.groupBookings.unshift(merged);
   }
-
   writeLocalStore(store);
 
+  // Sync to MongoDB if connected
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
-      await GroupBooking.findOneAndUpdate({ groupId }, merged, {
-        upsert: true,
-        new: true,
-      });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _id, ...mergedWithoutId } = merged;
+      const doc = await GroupBooking.findOneAndUpdate(
+        { groupId },
+        { $set: mergedWithoutId },
+        { upsert: true, new: true }
+      ).lean();
+      if (doc) return mapGroupBookingDoc(doc);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("saveGroupBooking MongoDB sync warning:", e);
+  }
 
   return merged;
 }

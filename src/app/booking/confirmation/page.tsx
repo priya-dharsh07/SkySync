@@ -20,8 +20,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import PageBackground from "@/components/layout/PageBackground";
-import confirmationBg from "@/bgs/image7.png";
 
 export default function ConfirmationPage() {
   const [booking, setBooking] = useState<any>(null);
@@ -39,18 +37,18 @@ export default function ConfirmationPage() {
     }
   }, []);
 
-  const bookingRef = booking?.bookingReference || "SKY-CONF-98421";
-  const eTicket = booking?.eTicketNumber || "ETKT-SS-849102-DEL";
-  const flightNum = booking?.flightNumber || "AI-204";
-  const airline = booking?.airline || "Air India";
-  const origin = booking?.origin || "New Delhi";
-  const originCode = booking?.originCode || "DEL";
-  const destination = booking?.destination || "Mumbai";
-  const destinationCode = booking?.destinationCode || "BOM";
+  const bookingRef = booking?.bookingReference || "SKY-CONF-PENDING";
+  const eTicket = booking?.eTicketNumber || "ETKT-SS-PENDING";
+  const flightNum = booking?.flightNumber || "SS-101";
+  const airline = booking?.airline || "SkySync Airways";
+  const origin = booking?.origin || "Origin City";
+  const originCode = booking?.originCode || "DEP";
+  const destination = booking?.destination || "Destination City";
+  const destinationCode = booking?.destinationCode || "ARR";
   const departureDate = booking?.departureDate || "2026-10-15";
   const departureTime = booking?.departureTime || "08:15";
   const arrivalTime = booking?.arrivalTime || "10:30";
-  const passengers = booking?.passengers || [{ firstName: "Priyadharshini", lastName: "Sundaram" }];
+  const passengers = booking?.passengers || [{ firstName: "Traveler", lastName: "" }];
   const selectedSeats = booking?.selectedSeats || ["14A"];
   const totalPrice = booking?.totalPrice || 4950;
 
@@ -77,12 +75,6 @@ export default function ConfirmationPage() {
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
       <div className="print:hidden">
-        <PageBackground
-          image={confirmationBg}
-          alt="Confirmation Background"
-          opacityClass="opacity-[0.14]"
-          overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
-        />
         <Navbar />
       </div>
 
@@ -115,18 +107,8 @@ export default function ConfirmationPage() {
           </div>
         </div>
 
-        {/* Scenic Confirmation Hero Header */}
-        <div className="relative overflow-hidden mt-6 rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-md text-white print:hidden text-center">
-          <div className="absolute inset-0 z-0 select-none">
-            <Image
-              src={confirmationBg}
-              alt="Flight Journey Complete"
-              fill
-              priority
-              className="object-cover object-center scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/90 via-[#052659]/80 to-[#021024]/75" />
-          </div>
+        {/* Confirmation Hero Header */}
+        <div className="relative overflow-hidden mt-6 rounded-3xl border border-slate-800 bg-gradient-to-r from-[#021024] via-[#052659] to-[#021024] p-6 sm:p-8 shadow-md text-white print:hidden text-center">
 
           <div className="relative z-10 max-w-lg mx-auto">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 backdrop-blur-md mb-3">
