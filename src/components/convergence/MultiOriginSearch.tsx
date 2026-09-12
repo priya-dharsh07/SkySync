@@ -38,10 +38,7 @@ interface SiteUser {
 }
 
 export default function MultiOriginSearch({ onSearch, loading }: MultiOriginSearchProps) {
-  const [travelers, setTravelers] = useState<TravelerOrigin[]>([
-    { id: "t-1", name: "Primary Traveler", originAirportCode: "DEL", departureDate: "2026-10-15" },
-    { id: "t-2", name: "Traveler 2", originAirportCode: "BOM", departureDate: "2026-10-15" },
-  ]);
+  const [travelers, setTravelers] = useState<TravelerOrigin[]>([]);
 
   const [activeAirportSelector, setActiveAirportSelector] = useState<string | null>(null);
   const [airportQuery, setAirportQuery] = useState("");
@@ -65,23 +62,21 @@ export default function MultiOriginSearch({ onSearch, loading }: MultiOriginSear
   const [showWeightSliders, setShowWeightSliders] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Load authenticated user on mount to set Traveler 1 accurately
+  // Load authenticated user on mount — populate only this user's real data
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
         if (data.authenticated && data.user) {
           const u = data.user;
-          setTravelers((prev) => {
-            const copy = [...prev];
-            copy[0] = {
+          setTravelers([
+            {
               id: `user-${u.id}`,
               name: `${u.name} (Organizer)`,
-              originAirportCode: u.homeAirport || "DEL",
-              departureDate: copy[0]?.departureDate || "2026-10-15",
-            };
-            return copy;
-          });
+              originAirportCode: u.homeAirport || "",
+              departureDate: "",
+            },
+          ]);
         }
       })
       .catch((err) => console.warn("Could not load current user:", err));
@@ -145,35 +140,33 @@ export default function MultiOriginSearch({ onSearch, loading }: MultiOriginSear
       return;
     }
 
-    const defaultAirport = user.homeAirport || "DEL";
+    const defaultAirport = user.homeAirport || "";
     setTravelers([
       ...travelers,
       {
         id: `user-${user.id}`,
         name: `${user.name} (Member)`,
         originAirportCode: defaultAirport,
-        departureDate: travelers[0]?.departureDate || "2026-10-15",
+        departureDate: "",
       },
     ]);
 
     setShowUserPicker(false);
-    setLocationNotice(`Added ${user.name} with origin ${defaultAirport}.`);
+    setLocationNotice(defaultAirport ? `Added ${user.name} with origin ${defaultAirport}.` : `Added ${user.name}. Please set their departure airport.`);
     setTimeout(() => setLocationNotice(null), 4000);
   }
 
   function addTraveler() {
     if (travelers.length >= 8) return;
     const newIdx = travelers.length + 1;
-    const unusedAirports = AIRPORTS.filter(a => !travelers.some(t => t.originAirportCode === a.code));
-    const nextAirport = unusedAirports.length > 0 ? unusedAirports[0].code : "DEL";
 
     setTravelers([
       ...travelers,
       {
         id: `t-${Date.now()}`,
         name: `Traveler ${newIdx}`,
-        originAirportCode: nextAirport,
-        departureDate: travelers[0]?.departureDate || "2026-10-15",
+        originAirportCode: "",
+        departureDate: "",
       },
     ]);
   }
@@ -197,6 +190,14 @@ export default function MultiOriginSearch({ onSearch, loading }: MultiOriginSear
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Validate all travelers have airports set
+    const missing = travelers.filter(t => !t.originAirportCode.trim());
+    if (missing.length > 0) {
+      setErrorMessage(`Please set a departure airport for: ${missing.map(t => t.name).join(", ")}`);
+      return;
+    }
+
     const originCodes = travelers.map(t => t.originAirportCode.toUpperCase());
     const uniqueCodes = new Set(originCodes);
     if (uniqueCodes.size < 2) {

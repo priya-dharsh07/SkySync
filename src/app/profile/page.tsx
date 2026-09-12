@@ -29,8 +29,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import PageBackground from "@/components/layout/PageBackground";
-import profileBg from "@/bgs/image1.png";
 import { findNearestAirport } from "@/lib/convergence/airports";
 
 type User = {
@@ -72,8 +70,11 @@ type BookingItem = {
 };
 
 type UserGroup = {
-  id: string;
-  name: string;
+  _id?: string;
+  groupId?: string;
+  groupName?: string;
+  id?: string;
+  name?: string;
   status: string;
   destination?: { city: string; code: string };
   members: Array<{ userId: string; name: string; role: string; status: string; paymentStatus: string }>;
@@ -261,12 +262,6 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
-        <PageBackground
-          image={profileBg}
-          alt="Profile Background"
-          opacityClass="opacity-[0.14]"
-          overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
-        />
         <Navbar />
         <div className="relative z-10 flex h-[80vh] flex-col items-center justify-center gap-2">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#052659] border-t-transparent" />
@@ -284,14 +279,6 @@ export default function ProfilePage() {
 
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
-      {/* Background with image1.png */}
-      <PageBackground
-        image={profileBg}
-        alt="Profile & Bookings Background"
-        opacityClass="opacity-[0.15]"
-        overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
-      />
-
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-6xl px-4 pt-24 pb-20 sm:px-6">
@@ -303,18 +290,8 @@ export default function ProfilePage() {
           <ArrowLeft size={13} /> Back to Home
         </Link>
 
-        {/* Profile Card Header With Scenic Image1 */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 p-7 shadow-md text-white">
-          <div className="absolute inset-0 z-0 select-none">
-            <Image
-              src={profileBg}
-              alt="Profile Frequent Traveler Header"
-              fill
-              priority
-              className="object-cover object-center scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/92 via-[#052659]/85 to-[#021024]/75" />
-          </div>
+        {/* Profile Card Header */}
+        <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-[#021024] via-[#052659] to-[#021024] p-7 shadow-md text-white">
 
           <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
@@ -476,24 +453,25 @@ export default function ProfilePage() {
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {userGroups.map((g) => {
+              {userGroups.map((g, idx) => {
                 const isOrganizer = g.organizerId === user.id;
+                const groupKey = g.groupId || g._id || g.id || `group-trip-${idx}`;
                 return (
                   <div
-                    key={g.id}
+                    key={groupKey}
                     className="flex flex-col justify-between rounded-2xl border border-purple-200/80 bg-white p-4 shadow-2xs hover:shadow-xs transition"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <span className="font-mono text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
-                          {g.status.replace(/_/g, " ")}
+                          {g.status ? g.status.replace(/_/g, " ") : "PLANNING"}
                         </span>
                         <span className="rounded px-2 py-0.5 text-[9px] font-bold uppercase font-mono bg-slate-100 text-slate-700">
                           {isOrganizer ? "Organizer" : "Traveler"}
                         </span>
                       </div>
 
-                      <h4 className="mt-2 text-sm font-bold text-[#021024]">{g.name}</h4>
+                      <h4 className="mt-2 text-sm font-bold text-[#021024]">{g.groupName || g.name || "Group Trip"}</h4>
                       <p className="text-xs text-slate-500 mt-0.5">
                         {g.destination?.city ? `Destination: ${g.destination.city} (${g.destination.code})` : "Selecting Hub Destination"}
                       </p>
@@ -504,7 +482,7 @@ export default function ProfilePage() {
                         {g.members?.length || 0} Travelers
                       </span>
                       <Link
-                        href={`/group-booking/${g.id}`}
+                        href={`/group-booking/${g.groupId || g._id || g.id}`}
                         className="inline-flex items-center gap-1 font-bold text-[#052659] hover:underline"
                       >
                         <span>Workspace</span>

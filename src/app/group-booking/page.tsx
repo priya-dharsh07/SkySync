@@ -23,8 +23,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import PageBackground from "@/components/layout/PageBackground";
-import bgImage from "@/bgs/image4.png";
 
 interface GroupSummary {
   _id: string;
@@ -59,7 +57,7 @@ export default function GroupBookingHubPage() {
   // Creation Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [groupName, setGroupName] = useState("");
-  const [targetDate, setTargetDate] = useState("2026-10-15");
+  const [targetDate, setTargetDate] = useState("");
   const [selectedTravelers, setSelectedTravelers] = useState<SiteUser[]>([]);
   const [userQuery, setUserQuery] = useState("");
   const [availableUsers, setAvailableUsers] = useState<SiteUser[]>([]);
@@ -161,28 +159,12 @@ export default function GroupBookingHubPage() {
 
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
-      {/* Background Image Integration */}
-      <PageBackground
-        image={bgImage}
-        alt="Group Travel Flight Routes"
-      />
-
       <div className="relative z-10">
         <Navbar />
 
         <main className="mx-auto max-w-7xl px-4 pt-24 pb-20 sm:px-6 lg:px-8">
-          {/* HERO BANNER WITH PROMINENT SCENIC IMAGE */}
-          <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 p-8 shadow-md sm:p-12 text-white">
-            <div className="absolute inset-0 z-0 select-none">
-              <Image
-                src={bgImage}
-                alt="Group Travel Flight Routes"
-                fill
-                priority
-                className="object-cover object-center scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/90 via-[#052659]/80 to-[#021024]/75" />
-            </div>
+          {/* HERO BANNER WITH CLEAN NAVY GRADIENT */}
+          <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-[#021024] via-[#052659] to-[#021024] p-8 shadow-md sm:p-12 text-white">
 
             <div className="relative z-10 max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-white/10 px-3.5 py-1 text-xs font-bold text-white backdrop-blur-md">
@@ -190,7 +172,7 @@ export default function GroupBookingHubPage() {
                 <span>Dedicated Group Travel Suite</span>
               </div>
 
-              <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              <h1 style={{ color: "#ffffff" }} className="mt-4 text-3xl font-black tracking-tight text-white !text-white drop-shadow-md sm:text-4xl lg:text-5xl">
                 Plan, Align & Book Flights for Your Group
               </h1>
 

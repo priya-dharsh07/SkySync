@@ -16,12 +16,12 @@ import {
   HelpCircle,
   Calendar,
   Globe2,
-  Lock
+  Lock,
+  Minus,
+  Plus
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import PageBackground from "@/components/layout/PageBackground";
-import passengersBg from "@/bgs/image5.png";
 import { checkVisaRequirement, VisaRequirement } from "@/lib/visa/visaRules";
 
 interface PassengerDetail {
@@ -83,14 +83,26 @@ export default function PassengersPage() {
           setFlight(JSON.parse(storedFlight));
         }
 
-        const count = parseInt(sessionStorage.getItem("passengers") || "1", 10);
+        const count = Math.max(1, parseInt(sessionStorage.getItem("passengers") || "1", 10));
         const storedPassengers = sessionStorage.getItem("passengerDetails");
 
         if (storedPassengers) {
-          const parsed = JSON.parse(storedPassengers);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPassengers(parsed);
-            return;
+          try {
+            const parsed = JSON.parse(storedPassengers);
+            if (Array.isArray(parsed) && parsed.length === count) {
+              setPassengers(parsed);
+              return;
+            } else if (Array.isArray(parsed) && parsed.length > 0) {
+              // Adjust length to match count
+              if (parsed.length > count) {
+                const sliced = parsed.slice(0, count);
+                setPassengers(sliced);
+                sessionStorage.setItem("passengerDetails", JSON.stringify(sliced));
+                return;
+              }
+            }
+          } catch (e) {
+            console.error("Error parsing stored passengers:", e);
           }
         }
 
@@ -199,10 +211,6 @@ export default function PassengersPage() {
 
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
-      <PageBackground
-        image={passengersBg}
-        alt="Travel Documents Background"
-      />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-5xl px-4 pt-24 pb-20 sm:px-6 lg:px-8">
@@ -229,19 +237,9 @@ export default function PassengersPage() {
           </div>
         </div>
 
-        {/* Selected Flight Photographic Visual Banner */}
+        {/* Selected Flight Visual Banner */}
         {flight && (
-          <div className="relative overflow-hidden mt-6 rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-md text-white">
-            <div className="absolute inset-0 z-0 select-none">
-              <Image
-                src={passengersBg}
-                alt="Selected Flight Travel"
-                fill
-                priority
-                className="object-cover object-center scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/92 via-[#052659]/85 to-[#021024]/80" />
-            </div>
+          <div className="relative overflow-hidden mt-6 rounded-3xl border border-slate-800 bg-gradient-to-r from-[#021024] via-[#052659] to-[#021024] p-5 sm:p-6 shadow-md text-white">
 
             <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
@@ -262,27 +260,82 @@ export default function PassengersPage() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={fillSampleData}
-                className="flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-bold text-[#052659] shadow-sm hover:bg-blue-50 transition"
-              >
-                <Sparkles size={13} className="text-[#052659]" />
-                <span>Autofill Verified Details</span>
-              </button>
+              <div className="font-mono text-right">
+                <span className="text-[10px] text-blue-200 uppercase font-bold block">Total Fare ({passengers.length} Traveler{passengers.length > 1 ? "s" : ""})</span>
+                <span className="text-lg font-black text-[#C1E8FF]">₹{(flight.price || 4950) * passengers.length}</span>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Title */}
-        <div className="mt-6">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Step 02 of 04</span>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[#021024] sm:text-3xl">
-            Passenger Information
-          </h1>
-          <p className="mt-1 text-xs text-slate-500">
-            Enter passenger information exactly as shown on government travel documents. SkySync verifies destination entry policies in real-time.
-          </p>
+        {/* Title & Passenger Count Selector */}
+        <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Step 02 of 04</span>
+            <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[#021024] sm:text-3xl">
+              Passenger Information
+            </h1>
+            <p className="mt-1 text-xs text-slate-500">
+              Enter passenger information exactly as shown on government travel documents. SkySync verifies destination entry policies in real-time.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xs">
+            <span className="text-xs font-bold text-[#021024]">Passengers:</span>
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  if (passengers.length <= 1) return;
+                  const newCount = passengers.length - 1;
+                  const next = passengers.slice(0, newCount);
+                  setPassengers(next);
+                  if (activePassengerTab >= newCount) setActivePassengerTab(0);
+                  if (typeof window !== "undefined") {
+                    sessionStorage.setItem("passengers", String(newCount));
+                    sessionStorage.setItem("passengerDetails", JSON.stringify(next));
+                  }
+                }}
+                disabled={passengers.length <= 1}
+                className="text-slate-400 hover:text-[#021024] disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Minus size={13} />
+              </button>
+              <span className="font-mono text-xs font-bold text-[#021024] min-w-4 text-center">{passengers.length}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (passengers.length >= 9) return;
+                  const newCount = passengers.length + 1;
+                  const next = [
+                    ...passengers,
+                    {
+                      title: newCount % 2 === 0 ? "Ms" : "Mr",
+                      firstName: "",
+                      lastName: "",
+                      email: "",
+                      phone: "",
+                      dateOfBirth: "",
+                      gender: newCount % 2 === 0 ? "female" : "male",
+                      passportNumber: "",
+                      passportCountry: "IND",
+                      passportExpiry: "",
+                      visaStatus: "PENDING_VERIFICATION",
+                    },
+                  ];
+                  setPassengers(next);
+                  if (typeof window !== "undefined") {
+                    sessionStorage.setItem("passengers", String(newCount));
+                    sessionStorage.setItem("passengerDetails", JSON.stringify(next));
+                  }
+                }}
+                disabled={passengers.length >= 9}
+                className="text-slate-400 hover:text-[#021024] disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Plus size={13} />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Multi-Passenger Tab Switcher */}

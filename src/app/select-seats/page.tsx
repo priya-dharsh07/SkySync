@@ -197,7 +197,10 @@ export default function SelectSeatsPage() {
                   {layout.cabinType}
                 </span>
               </div>
-              <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+              <h1 
+                className="mt-2 text-2xl font-extrabold tracking-tight !text-white sm:text-3xl"
+                style={{ color: "#ffffff" }}
+              >
                 Interactive Cabin Seat Selection
               </h1>
               <p className="mt-1 text-xs text-blue-100/85">

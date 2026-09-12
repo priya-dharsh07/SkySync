@@ -1,10 +1,10 @@
 const fs = require("fs");
-const path = "./.data/db_store.json";
-if (fs.existsSync(path)) {
-  const data = JSON.parse(fs.readFileSync(path, "utf-8"));
-  data.users = data.users.filter(u => u.email === "priya@example.com");
-  data.groupBookings = [];
-  data.bookings = [];
-  fs.writeFileSync(path, JSON.stringify(data, null, 2), "utf-8");
-  console.log("Cleaned db_store.json successfully. Users remaining:", data.users.length);
+const path = require("path");
+
+const dataDir = path.join(__dirname, "..", ".data");
+if (fs.existsSync(dataDir)) {
+  fs.rmSync(dataDir, { recursive: true, force: true });
+  console.log("Completely removed .data fallback directory and JSON files.");
+} else {
+  console.log(".data directory does not exist.");
 }

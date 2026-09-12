@@ -23,10 +23,10 @@ export default function Hero({ onExploreClick }: { onExploreClick?: () => void }
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center scale-105"
+          className="object-contain object-center"
         />
-        {/* Modern dark aviation glass gradient overlay for crystal clear text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#021024]/85 via-[#052659]/75 to-[#021024]/90 backdrop-blur-[1.5px]" />
+        {/* Crisp, light neutral overlay for vibrant picture clarity and text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/45 via-slate-900/30 to-slate-950/55" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-6xl px-6 lg:px-8">
@@ -49,7 +49,8 @@ export default function Hero({ onExploreClick }: { onExploreClick?: () => void }
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mt-6 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl leading-[1.12] drop-shadow-sm"
+            className="mt-6 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl leading-[1.12]"
+            style={{ textShadow: "0 2px 14px rgba(0,0,0,0)", color: "#021024" }}
           >
             Fly From Different Cities. <br />
             <span className="bg-gradient-to-r from-[#C1E8FF] via-white to-[#7DA0CA] bg-clip-text text-transparent">
@@ -62,7 +63,8 @@ export default function Hero({ onExploreClick }: { onExploreClick?: () => void }
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-5 text-sm leading-relaxed text-blue-100/90 sm:text-base max-w-2xl mx-auto"
+            className="mt-5 text-sm leading-relaxed sm:text-base max-w-2xl mx-auto font-semibold"
+            style={{ color: "#021024", textShadow: "0 1px 10px rgba(0,0,0,0.7)" }}
           >
             Planning a trip with friends or colleagues from different cities? SkySync coordinates traveler origins, discovers the fairest meeting destinations, and guarantees everyone gets confirmed together with zero stranded-ticket risk.
           </motion.p>
@@ -100,44 +102,44 @@ export default function Hero({ onExploreClick }: { onExploreClick?: () => void }
             transition={{ duration: 0.5, delay: 0.4 }}
             className="mt-12 grid grid-cols-2 gap-3 text-left sm:grid-cols-4"
           >
-            {/* Pareto: Purple */}
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 shadow-lg backdrop-blur-md text-white">
-              <div className="flex items-center gap-1.5 text-[#C1E8FF]">
-                <Sparkles size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Smart Matching</span>
+            {/* Pareto: Smart Matching */}
+            <div className="rounded-2xl border border-white/90 bg-white/90 p-4 shadow-xl backdrop-blur-md">
+              <div className="flex items-center gap-1.5 text-[#052659]">
+                <Sparkles size={14} className="text-[#052659]" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#052659]">Smart Matching</span>
               </div>
-              <p className="mt-1.5 text-base font-bold text-white">Fair Cost Split</p>
-              <p className="mt-0.5 text-[11px] text-blue-100/75">Finds destinations with balanced fares and close arrival times.</p>
+              <p className="mt-1.5 text-base font-extrabold text-[#021024]">Fair Cost Split</p>
+              <p className="mt-0.5 text-[11px] font-medium text-slate-700 leading-snug">Finds destinations with balanced fares and close arrival times.</p>
             </div>
 
-            {/* Atomic: Emerald */}
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 shadow-lg backdrop-blur-md text-white">
-              <div className="flex items-center gap-1.5 text-emerald-300">
-                <ShieldCheck size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Group Synchronized</span>
+            {/* Atomic: Group Synchronized */}
+            <div className="rounded-2xl border border-white/90 bg-white/90 p-4 shadow-xl backdrop-blur-md">
+              <div className="flex items-center gap-1.5 text-emerald-800">
+                <ShieldCheck size={14} className="text-emerald-700" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800">Group Synchronized</span>
               </div>
-              <p className="mt-1.5 text-base font-bold text-white">All Together</p>
-              <p className="mt-0.5 text-[11px] text-blue-100/75">Everyone gets confirmed together with zero partial-booking risk.</p>
+              <p className="mt-1.5 text-base font-extrabold text-[#021024]">All Together</p>
+              <p className="mt-0.5 text-[11px] font-medium text-slate-700 leading-snug">Everyone gets confirmed together with zero partial-booking risk.</p>
             </div>
 
-            {/* Locks: Amber */}
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 shadow-lg backdrop-blur-md text-white">
-              <div className="flex items-center gap-1.5 text-amber-300">
-                <Lock size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Fare Price Lock</span>
+            {/* Locks: Fare Price Lock */}
+            <div className="rounded-2xl border border-white/90 bg-white/90 p-4 shadow-xl backdrop-blur-md">
+              <div className="flex items-center gap-1.5 text-amber-800">
+                <Lock size={14} className="text-amber-700" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800">Fare Price Lock</span>
               </div>
-              <p className="mt-1.5 text-base font-bold text-white">15-Min Hold</p>
-              <p className="mt-0.5 text-[11px] text-blue-100/75">Holds seats and prices securely while all members checkout.</p>
+              <p className="mt-1.5 text-base font-extrabold text-[#021024]">15-Min Hold</p>
+              <p className="mt-0.5 text-[11px] font-medium text-slate-700 leading-snug">Holds seats and prices securely while all members checkout.</p>
             </div>
 
-            {/* Rollback: Coral */}
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 shadow-lg backdrop-blur-md text-white">
-              <div className="flex items-center gap-1.5 text-rose-300">
-                <RotateCcw size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">100% Risk Free</span>
+            {/* Rollback: 100% Risk Free */}
+            <div className="rounded-2xl border border-white/90 bg-white/90 p-4 shadow-xl backdrop-blur-md">
+              <div className="flex items-center gap-1.5 text-rose-800">
+                <RotateCcw size={14} className="text-rose-700" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-800">100% Risk Free</span>
               </div>
-              <p className="mt-1.5 text-base font-bold text-white">Full Protection</p>
-              <p className="mt-0.5 text-[11px] text-blue-100/75">Instant, hassle-free refund if any flight in the itinerary is unavailable.</p>
+              <p className="mt-1.5 text-base font-extrabold text-[#021024]">Full Protection</p>
+              <p className="mt-0.5 text-[11px] font-medium text-slate-700 leading-snug">Instant, hassle-free refund if any flight in the itinerary is unavailable.</p>
             </div>
           </motion.div>
         </div>
