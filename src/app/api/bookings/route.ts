@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import Booking from "@/models/Booking";
 import { getCurrentUser } from "@/lib/auth";
+import {
+  findBookings,
+  findBookingById,
+  saveBooking,
+  updateBookingStatus,
+} from "@/lib/db/unifiedStore";
 
 export async function GET() {
   try {
@@ -13,24 +17,15 @@ export async function GET() {
       );
     }
 
-    await connectDB();
-
-    const bookings = await Booking.find({
-      $or: [
-        { userId: user.id },
-        { userEmail: user.email.toLowerCase() },
-      ],
-    })
-      .sort({ createdAt: -1 })
-      .lean();
+    const bookings = await findBookings({
+      userId: user.id,
+      userEmail: user.email,
+    });
 
     return NextResponse.json({
       success: true,
       count: bookings.length,
-      bookings: bookings.map((b: any) => ({
-        ...b,
-        _id: b._id.toString(),
-      })),
+      bookings,
     });
   } catch (error) {
     console.error("GET /api/bookings error:", error);
@@ -52,6 +47,11 @@ export async function POST(request: NextRequest) {
       selectedSeats = [],
       totalPrice,
       paymentCardLast4 = "4242",
+      groupId,
+      groupBookingId,
+      groupName,
+      isGroupBooking = false,
+      travelerRole,
     } = body;
 
     if (!flight || !passengers || !Array.isArray(passengers) || passengers.length === 0) {
@@ -61,14 +61,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await connectDB();
-
-    const bookingRef = `SKY-${Math.random().toString(36).substring(2, 7).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
-    const eTicket = `ETKT-SS-${Math.floor(100000 + Math.random() * 900000)}-${flight.originCode || "DEP"}`;
+    const bookingRef = `SKY-${Math.random().toString(36).substring(2, 7).toUpperCase()}-${Math.floor(
+      100 + Math.random() * 900
+    )}`;
+    const eTicket = `ETKT-SS-${Math.floor(100000 + Math.random() * 900000)}-${
+      flight.originCode || "DEP"
+    }`;
 
     const calculatedPrice =
       Number(totalPrice) ||
-      (Number(flight.price || flight.priceUsd || 4950) * passengers.length);
+      Number(flight.price || flight.priceUsd || 4950) * passengers.length;
 
     const safeDepartureDate =
       typeof flight.departureDate === "string"
@@ -77,9 +79,16 @@ export async function POST(request: NextRequest) {
         ? flight.departureDate.toISOString().split("T")[0]
         : "2026-10-15";
 
-    const newBooking = await Booking.create({
+    const newBooking = await saveBooking({
       userId: user ? user.id : undefined,
-      userEmail: user ? user.email.toLowerCase() : passengers[0].email?.toLowerCase() || "guest@skysync.app",
+      userEmail: user
+        ? user.email.toLowerCase()
+        : passengers[0].email?.toLowerCase() || "traveler@skysync.app",
+      groupId,
+      groupBookingId,
+      groupName,
+      isGroupBooking,
+      travelerRole,
       bookingReference: bookingRef,
       eTicketNumber: eTicket,
       flightNumber: flight.flightNumber || `${flight.airlineCode || "SS"}-101`,
@@ -99,6 +108,7 @@ export async function POST(request: NextRequest) {
         phone: p.phone || "",
         passportNumber: p.passportNumber || "",
         passportCountry: p.passportCountry || "IND",
+        passportExpiry: p.passportExpiry || "",
         visaStatus: p.visaStatus || "VERIFIED_OK",
       })),
       selectedSeats: Array.isArray(selectedSeats) ? selectedSeats : ["14A"],
@@ -145,33 +155,32 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    await connectDB();
-
-    // Verify ownership
-    const booking = await Booking.findOne({
-      _id: bookingId,
-      $or: [
-        { userId: user.id },
-        { userEmail: user.email.toLowerCase() },
-      ],
-    });
-
+    const booking = await findBookingById(bookingId);
     if (!booking) {
       return NextResponse.json(
-        { success: false, message: "Booking not found or access denied" },
+        { success: false, message: "Booking not found" },
         { status: 404 }
       );
     }
 
-    if (action === "CANCEL") {
-      booking.status = "CANCELLED";
-      booking.escrowStatus = "VOIDED";
-      await booking.save();
+    // Verify ownership
+    const isOwner =
+      booking.userId === user.id ||
+      booking.userEmail?.toLowerCase() === user.email.toLowerCase();
 
+    if (!isOwner) {
+      return NextResponse.json(
+        { success: false, message: "Access denied" },
+        { status: 403 }
+      );
+    }
+
+    if (action === "CANCEL") {
+      const updated = await updateBookingStatus(bookingId, "CANCELLED", "VOIDED");
       return NextResponse.json({
         success: true,
-        message: "Booking cancelled successfully. Two-phase escrow holds have been voided.",
-        booking,
+        message: "Booking cancelled successfully. Reservation holds have been released.",
+        booking: updated,
       });
     }
 

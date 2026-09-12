@@ -28,6 +28,11 @@ export interface IBooking extends Document {
   totalPrice: number;
   escrowStatus: "CAPTURED" | "HELD" | "VOIDED";
   status: "CONFIRMED" | "CANCELLED";
+  groupId?: string;
+  groupBookingId?: string;
+  groupName?: string;
+  isGroupBooking?: boolean;
+  travelerRole?: string;
   paymentCardLast4: string;
   createdAt: Date;
   updatedAt: Date;
@@ -37,6 +42,11 @@ const BookingSchema: Schema<IBooking> = new Schema(
   {
     userId: { type: String, index: true },
     userEmail: { type: String, index: true },
+    groupId: { type: String, index: true },
+    groupBookingId: { type: String, index: true },
+    groupName: { type: String },
+    isGroupBooking: { type: Boolean, default: false },
+    travelerRole: { type: String },
     bookingReference: { type: String, required: true, unique: true, index: true },
     eTicketNumber: { type: String, required: true },
     flightNumber: { type: String, required: true },

@@ -8,6 +8,8 @@ import FlightTrajectoryMap from "@/components/convergence/FlightTrajectoryMap";
 import ParetoFrontierChart from "@/components/convergence/ParetoFrontierChart";
 import ConvergenceResults from "@/components/convergence/ConvergenceResults";
 import Footer from "@/components/layout/Footer";
+import PageBackground from "@/components/layout/PageBackground";
+import landingBg from "@/bgs/landing.jpg";
 import { ConvergenceDestination, OptimizationWeights, TravelerOrigin } from "@/lib/convergence/pareto";
 import { 
   ShieldCheck, 
@@ -21,16 +23,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [destinations, setDestinations] = useState<ConvergenceDestination[]>([]);
   const [selectedDestination, setSelectedDestination] = useState<ConvergenceDestination | null>(null);
-
-  // Initial demo search on mount
-  useEffect(() => {
-    const defaultTravelers: TravelerOrigin[] = [
-      { id: "t-1", name: "Alex (New York)", originAirportCode: "JFK", departureDate: "2026-10-15" },
-      { id: "t-2", name: "Emma (London)", originAirportCode: "LHR", departureDate: "2026-10-15" },
-      { id: "t-3", name: "Kenji (Tokyo)", originAirportCode: "HND", departureDate: "2026-10-15" },
-    ];
-    handleExecuteSearch(defaultTravelers, { priceFairness: 0.40, arrivalAlignment: 0.35, travelDuration: 0.25 });
-  }, []);
 
   async function handleExecuteSearch(travelers: TravelerOrigin[], weights: OptimizationWeights) {
     try {
@@ -62,10 +54,16 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
+    <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
+      <PageBackground
+        image={landingBg}
+        alt="SkySync Flight Convergence"
+        opacityClass="opacity-[0.16]"
+        overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
+      />
       <Navbar />
 
-      <main>
+      <main className="relative z-10">
         {/* HERO SECTION */}
         <Hero onExploreClick={scrollToSearch} />
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { 
@@ -19,6 +20,8 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageBackground from "@/components/layout/PageBackground";
+import confirmationBg from "@/bgs/image7.png";
 
 export default function ConfirmationPage() {
   const [booking, setBooking] = useState<any>(null);
@@ -72,12 +75,18 @@ export default function ConfirmationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
+    <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
       <div className="print:hidden">
+        <PageBackground
+          image={confirmationBg}
+          alt="Confirmation Background"
+          opacityClass="opacity-[0.14]"
+          overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
+        />
         <Navbar />
       </div>
 
-      <main className="mx-auto max-w-4xl px-4 pt-24 pb-20 sm:px-6">
+      <main className="relative z-10 mx-auto max-w-4xl px-4 pt-24 pb-20 sm:px-6">
         {/* Navigation & Actions */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 print:hidden">
           <Link
@@ -106,22 +115,35 @@ export default function ConfirmationPage() {
           </div>
         </div>
 
-        {/* Confirmation Header Banner */}
-        <div className="mt-6 text-center print:hidden">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-xs mb-3">
-            <CheckCircle2 size={30} />
+        {/* Scenic Confirmation Hero Header */}
+        <div className="relative overflow-hidden mt-6 rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-md text-white print:hidden text-center">
+          <div className="absolute inset-0 z-0 select-none">
+            <Image
+              src={confirmationBg}
+              alt="Flight Journey Complete"
+              fill
+              priority
+              className="object-cover object-center scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/90 via-[#052659]/80 to-[#021024]/75" />
           </div>
 
-          <span className="rounded-full bg-emerald-50 px-3 py-1 font-mono text-xs font-bold text-emerald-700 border border-emerald-200">
-            Booking Confirmed & Synchronized
-          </span>
+          <div className="relative z-10 max-w-lg mx-auto">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 backdrop-blur-md mb-3">
+              <CheckCircle2 size={30} />
+            </div>
 
-          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-[#021024] sm:text-3xl">
-            Official Boarding Pass & E-Ticket
-          </h1>
-          <p className="mt-1 text-xs text-slate-500">
-            Your flight reservation has been ticketed and recorded in the booking ledger. Present this boarding pass at the security checkpoint and departure gate.
-          </p>
+            <span className="rounded-full bg-white/20 px-3 py-1 font-mono text-xs font-bold text-white border border-white/20 backdrop-blur-md">
+              Booking Confirmed & Synchronized
+            </span>
+
+            <h1 className="mt-3 text-2xl font-extrabold text-white sm:text-3xl">
+              Official Boarding Pass & E-Ticket
+            </h1>
+            <p className="mt-1 text-xs text-blue-100/90">
+              Your flight reservation has been ticketed and recorded in the booking ledger. Present this boarding pass at the security checkpoint and departure gate.
+            </p>
+          </div>
         </div>
 
         {/* AUTHENTIC AIRLINE BOARDING PASS CONTAINER */}

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,6 +20,8 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageBackground from "@/components/layout/PageBackground";
+import passengersBg from "@/bgs/image5.png";
 import { checkVisaRequirement, VisaRequirement } from "@/lib/visa/visaRules";
 
 interface PassengerDetail {
@@ -136,9 +139,9 @@ export default function PassengersPage() {
   function fillSampleData() {
     const sample = passengers.map((p, idx) => ({
       title: idx === 0 ? "Ms" : "Mr",
-      firstName: idx === 0 ? (p.firstName || "Priyadharshini") : `Rohan`,
-      lastName: idx === 0 ? (p.lastName || "Sundaram") : `Verma`,
-      email: idx === 0 ? (p.email || "priya.sundaram@example.com") : `rohan.verma@example.com`,
+      firstName: idx === 0 ? (p.firstName || "Primary") : `Companion`,
+      lastName: idx === 0 ? (p.lastName || "Traveler") : `${idx + 1}`,
+      email: idx === 0 ? (p.email || "traveler@skysync.app") : `companion${idx + 1}@skysync.app`,
       phone: "+91 98401 23456",
       dateOfBirth: idx === 0 ? "1996-05-14" : "1994-08-22",
       gender: idx === 0 ? "female" : "male",
@@ -171,8 +174,12 @@ export default function PassengersPage() {
   const visaAdvisory: VisaRequirement = useMemo(() => {
     const destCountry = flight?.destination || flight?.destinationCode || "United Arab Emirates";
     const originCountry = flight?.origin || flight?.originCode || "India";
-    return checkVisaRequirement(activePassenger?.passportCountry || "IND", destCountry, originCountry);
-  }, [activePassenger?.passportCountry, flight]);
+    return checkVisaRequirement(
+      activePassenger?.passportCountry || "IND",
+      destCountry,
+      originCountry
+    );
+  }, [flight, activePassenger]);
 
   // Check 6-month passport validity against flight departure
   const validityWarning = useMemo(() => {
@@ -191,10 +198,14 @@ export default function PassengersPage() {
   }, [activePassenger?.passportExpiry, flight?.departureDate]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
+    <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
+      <PageBackground
+        image={passengersBg}
+        alt="Travel Documents Background"
+      />
       <Navbar />
 
-      <main className="mx-auto max-w-5xl px-4 pt-24 pb-20 sm:px-6 lg:px-8">
+      <main className="relative z-10 mx-auto max-w-5xl px-4 pt-24 pb-20 sm:px-6 lg:px-8">
         {/* Header navigation */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
           <Link
@@ -218,35 +229,48 @@ export default function PassengersPage() {
           </div>
         </div>
 
-        {/* Selected Flight Banner */}
+        {/* Selected Flight Photographic Visual Banner */}
         {flight && (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 font-mono text-xs font-bold text-[#C1E8FF]">
-                {flight.airlineCode || "SS"}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#021024]">{flight.airline}</span>
-                  <span className="font-mono text-xs text-slate-400">({flight.flightNumber})</span>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-600 border border-slate-200 uppercase">
-                    {flight.type || "Scheduled"}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500">
-                  {flight.origin} ({flight.originCode}) → {flight.destination} ({flight.destinationCode}) • {flight.departureDate} at {flight.departureTime}
-                </p>
-              </div>
+          <div className="relative overflow-hidden mt-6 rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-md text-white">
+            <div className="absolute inset-0 z-0 select-none">
+              <Image
+                src={passengersBg}
+                alt="Selected Flight Travel"
+                fill
+                priority
+                className="object-cover object-center scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/92 via-[#052659]/85 to-[#021024]/80" />
             </div>
 
-            <button
-              type="button"
-              onClick={fillSampleData}
-              className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-[#052659] hover:bg-blue-100 transition shadow-2xs"
-            >
-              <Sparkles size={13} className="text-blue-600" />
-              <span>Autofill from Profile</span>
-            </button>
+            <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 border border-white/20 font-mono text-sm font-extrabold text-[#C1E8FF] backdrop-blur-md">
+                  {flight.airlineCode || "SS"}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-extrabold text-white">{flight.airline}</span>
+                    <span className="font-mono text-xs text-blue-200">({flight.flightNumber})</span>
+                    <span className="rounded-full bg-white/15 px-2 py-0.5 font-mono text-[10px] text-white border border-white/25 uppercase">
+                      {flight.type || "Scheduled"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-100/90 mt-0.5">
+                    {flight.origin} ({flight.originCode}) → {flight.destination} ({flight.destinationCode}) • {flight.departureDate} at {flight.departureTime}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={fillSampleData}
+                className="flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-bold text-[#052659] shadow-sm hover:bg-blue-50 transition"
+              >
+                <Sparkles size={13} className="text-[#052659]" />
+                <span>Autofill Verified Details</span>
+              </button>
+            </div>
           </div>
         )}
 
