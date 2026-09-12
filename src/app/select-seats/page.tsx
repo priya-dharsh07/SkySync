@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import { 
   ArrowLeft, 
@@ -20,6 +21,8 @@ import {
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageBackground from "@/components/layout/PageBackground";
+import seatsBg from "@/bgs/image6.png";
 import { getAircraftLayoutForFlight, AircraftLayout, SeatItem } from "@/lib/seats/aircraftLayouts";
 
 export default function SelectSeatsPage() {
@@ -156,10 +159,16 @@ export default function SelectSeatsPage() {
   }, [layout]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
+    <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
+      <PageBackground
+        image={seatsBg}
+        alt="Seat Selection Cabin Background"
+        opacityClass="opacity-[0.14]"
+        overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
+      />
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-4 pt-24 pb-20 sm:px-6 lg:px-8">
+      <main className="relative z-10 mx-auto max-w-7xl px-4 pt-24 pb-20 sm:px-6 lg:px-8">
         {/* Navigation back and progress indicator */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
           <Link
@@ -183,47 +192,56 @@ export default function SelectSeatsPage() {
           </div>
         </div>
 
-        {/* Page Title & Controls Bar */}
-        <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#052659] border border-blue-200">
-                <Plane size={11} /> {layout.manufacturer} {layout.model}
-              </span>
-              <span className="font-mono text-xs text-slate-500 font-semibold">
-                {layout.cabinType}
-              </span>
-            </div>
-            <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[#021024] sm:text-3xl">
-              Select Your Seats
-            </h1>
-            <p className="mt-1 text-xs text-slate-500">
-              Choose your preferred seats for your journey. Selected seats are reserved for your party while you complete checkout.
-            </p>
+        {/* Scenic Cabin Visual Banner */}
+        <div className="relative overflow-hidden mt-6 rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-md text-white">
+          <div className="absolute inset-0 z-0 select-none">
+            <Image
+              src={seatsBg}
+              alt="Aircraft Cabin Interior"
+              fill
+              priority
+              className="object-cover object-center scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/92 via-[#052659]/85 to-[#021024]/75" />
           </div>
 
-          {/* 3D View Toggle & Hold Timer */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-1.5 text-xs text-amber-900 shadow-2xs">
-              <Clock size={14} className="text-amber-600" />
-              <div>
-                <span className="text-[9px] uppercase font-bold text-amber-700 block leading-tight">Seats Held For</span>
-                <span className="font-mono font-extrabold text-xs">{formatTimer(holdTtlSeconds)}</span>
+          <div className="relative z-10 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#C1E8FF] border border-white/20 backdrop-blur-md">
+                  <Plane size={12} /> {layout.manufacturer} {layout.model}
+                </span>
+                <span className="font-mono text-xs text-blue-200 font-semibold">
+                  {layout.cabinType}
+                </span>
               </div>
+              <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                Interactive Cabin Seat Selection
+              </h1>
+              <p className="mt-1 text-xs text-blue-100/85">
+                Explore real-time seat availability across standard, extra legroom, and front rows.
+              </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIs3DMode(!is3DMode)}
-              className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition shadow-xs ${
-                is3DMode
-                  ? "border-[#052659] bg-[#052659] text-white"
-                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              {is3DMode ? <Layers size={14} className="text-blue-200" /> : <Eye size={14} />}
-              <span>{is3DMode ? "3D Perspective On" : "2D Flat View"}</span>
-            </button>
+            {/* 3D View Toggle & Hold Timer */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/20 px-3.5 py-2 text-xs text-amber-200 backdrop-blur-md">
+                <Clock size={15} className="text-amber-300" />
+                <div>
+                  <span className="text-[9px] uppercase font-bold text-amber-300/80 block leading-tight">Seats Held For</span>
+                  <span className="font-mono font-extrabold text-xs text-white">{formatTimer(holdTtlSeconds)}</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIs3DMode(!is3DMode)}
+                className="flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-[#052659] shadow-sm hover:bg-blue-50 transition"
+              >
+                {is3DMode ? <Layers size={14} className="text-[#052659]" /> : <Eye size={14} className="text-[#052659]" />}
+                <span>{is3DMode ? "3D Perspective" : "2D Flat View"}</span>
+              </button>
+            </div>
           </div>
         </div>
 

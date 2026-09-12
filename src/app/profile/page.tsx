@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -20,10 +21,16 @@ import {
   LocateFixed,
   ShieldCheck,
   RotateCcw,
-  Check
+  Check,
+  Users,
+  ExternalLink,
+  Sparkles,
+  ChevronRight
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageBackground from "@/components/layout/PageBackground";
+import profileBg from "@/bgs/image1.png";
 import { findNearestAirport } from "@/lib/convergence/airports";
 
 type User = {
@@ -56,14 +63,30 @@ type BookingItem = {
   totalPrice: number;
   escrowStatus: string;
   status: "CONFIRMED" | "CANCELLED";
+  isGroupBooking?: boolean;
+  groupId?: string;
+  groupBookingId?: string;
+  groupName?: string;
+  travelerRole?: string;
   createdAt: string;
+};
+
+type UserGroup = {
+  id: string;
+  name: string;
+  status: string;
+  destination?: { city: string; code: string };
+  members: Array<{ userId: string; name: string; role: string; status: string; paymentStatus: string }>;
+  organizerId: string;
 };
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
+  const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<"ALL" | "CONFIRMED" | "CANCELLED">("ALL");
+  const [tripTypeFilter, setTripTypeFilter] = useState<"ALL" | "SOLO" | "GROUP">("ALL");
 
   // Selected booking for Boarding Pass Modal
   const [viewingBooking, setViewingBooking] = useState<BookingItem | null>(null);
@@ -105,6 +128,20 @@ export default function ProfilePage() {
           }
         } catch (bErr) {
           console.warn("Failed to load bookings:", bErr);
+        }
+
+        // Fetch user's active group trips
+        try {
+          const groupRes = await fetch("/api/group-bookings", {
+            cache: "no-store",
+            credentials: "include",
+          });
+          if (groupRes.ok) {
+            const gData = await groupRes.json();
+            setUserGroups(gData.groups || []);
+          }
+        } catch (gErr) {
+          console.warn("Failed to load group trips:", gErr);
         }
       } catch (error) {
         console.error("Profile loading error:", error);
@@ -214,16 +251,24 @@ export default function ProfilePage() {
   }
 
   const filteredBookings = bookings.filter((b) => {
-    if (activeFilter === "CONFIRMED") return b.status === "CONFIRMED";
-    if (activeFilter === "CANCELLED") return b.status === "CANCELLED";
+    if (activeFilter === "CONFIRMED" && b.status !== "CONFIRMED") return false;
+    if (activeFilter === "CANCELLED" && b.status !== "CANCELLED") return false;
+    if (tripTypeFilter === "SOLO" && b.isGroupBooking) return false;
+    if (tripTypeFilter === "GROUP" && !b.isGroupBooking) return false;
     return true;
   });
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
+      <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
+        <PageBackground
+          image={profileBg}
+          alt="Profile Background"
+          opacityClass="opacity-[0.14]"
+          overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
+        />
         <Navbar />
-        <div className="flex h-[80vh] flex-col items-center justify-center gap-2">
+        <div className="relative z-10 flex h-[80vh] flex-col items-center justify-center gap-2">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#052659] border-t-transparent" />
           <span className="text-xs text-slate-500 font-semibold">Synchronizing account and booking ledger...</span>
         </div>
@@ -238,10 +283,18 @@ export default function ProfilePage() {
   const initial = user.name.trim().charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
+    <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
+      {/* Background with image1.png */}
+      <PageBackground
+        image={profileBg}
+        alt="Profile & Bookings Background"
+        opacityClass="opacity-[0.15]"
+        overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
+      />
+
       <Navbar />
 
-      <main className="mx-auto max-w-6xl px-4 pt-24 pb-20 sm:px-6">
+      <main className="relative z-10 mx-auto max-w-6xl px-4 pt-24 pb-20 sm:px-6">
         {/* Back Link */}
         <Link
           href="/"
@@ -250,33 +303,54 @@ export default function ProfilePage() {
           <ArrowLeft size={13} /> Back to Home
         </Link>
 
-        {/* Profile Card Header */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-7 shadow-sm">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        {/* Profile Card Header With Scenic Image1 */}
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 p-7 shadow-md text-white">
+          <div className="absolute inset-0 z-0 select-none">
+            <Image
+              src={profileBg}
+              alt="Profile Frequent Traveler Header"
+              fill
+              priority
+              className="object-cover object-center scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/92 via-[#052659]/85 to-[#021024]/75" />
+          </div>
+
+          <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#052659] text-2xl font-extrabold text-[#C1E8FF] shadow-xs">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 border border-white/20 text-2xl font-extrabold text-[#C1E8FF] shadow-xs backdrop-blur-md">
                 {initial}
               </div>
 
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  SkySync Account & Traveler Profile
+                <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-mono text-[10px] font-bold text-white border border-white/20 backdrop-blur-md uppercase">
+                  Verified SkySync Traveler Account
                 </span>
-                <h1 className="text-2xl font-extrabold tracking-tight text-[#021024]">{user.name}</h1>
-                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-white">{user.name}</h1>
+                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-blue-100/90">
                   <Mail size={13} />
                   <span>{user.email}</span>
                 </p>
               </div>
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:text-rose-600"
-            >
-              <LogOut size={14} />
-              <span>Sign Out</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/group-booking"
+                className="flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-[#052659] shadow-sm hover:bg-blue-50 transition"
+              >
+                <Users size={14} />
+                <span>Group Booking Hub</span>
+              </Link>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-bold text-white shadow-2xs transition hover:bg-white/20 hover:text-rose-300 backdrop-blur-md"
+              >
+                <LogOut size={14} />
+                <span>Sign Out</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -291,7 +365,7 @@ export default function ProfilePage() {
         {/* Grid Stats & Quick Preferences */}
         <div className="mt-6 grid gap-5 sm:grid-cols-3">
           {/* Default Home Base Location Widget */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-xs p-5 shadow-sm space-y-3">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-[#052659]">
                 <MapPin size={16} className="text-[#5483B3]" />
@@ -307,7 +381,7 @@ export default function ProfilePage() {
                 {user.homeCity || "New Delhi"} ({user.homeAirport || "DEL"})
               </div>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Automatically set as your departure city for group trip itineraries.
+                Automatically prefilled as your departure airport for solo and group trips.
               </p>
             </div>
 
@@ -323,7 +397,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Booked Flights Overview */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-xs p-5 shadow-sm">
             <div className="flex items-center gap-2 text-[#052659] border-b border-slate-100 pb-3">
               <Ticket size={16} className="text-[#5483B3]" />
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#021024]">My Reservations</h3>
@@ -339,17 +413,26 @@ export default function ProfilePage() {
                 </span>
               </div>
             </div>
-            <Link
-              href="/flights"
-              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#052659] py-2 text-xs font-bold text-white shadow-sm hover:bg-[#021024] transition"
-            >
-              <Plane size={13} />
-              <span>Book Another Flight</span>
-            </Link>
+            <div className="mt-4 flex gap-2">
+              <Link
+                href="/flights"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#052659] py-2 text-xs font-bold text-white shadow-sm hover:bg-[#021024] transition"
+              >
+                <Plane size={13} />
+                <span>Solo Flight</span>
+              </Link>
+              <Link
+                href="/group-booking"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50 py-2 text-xs font-bold text-purple-700 shadow-2xs hover:bg-purple-100 transition"
+              >
+                <Users size={13} />
+                <span>Group Trip</span>
+              </Link>
+            </div>
           </div>
 
           {/* Protection & Support */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-xs p-5 shadow-sm">
             <div className="flex items-center gap-2 text-[#052659] border-b border-slate-100 pb-3">
               <ShieldCheck size={16} className="text-[#5483B3]" />
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#021024]">Travel Protection</h3>
@@ -367,8 +450,76 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* ACTIVE GROUP EXPEDITIONS SECTION (If user has group bookings) */}
+        {userGroups.length > 0 && (
+          <div className="mt-8 rounded-3xl border border-purple-200 bg-gradient-to-r from-purple-50/50 via-white to-blue-50/40 p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-purple-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-600 text-white shadow-xs">
+                  <Users size={18} />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-[#021024]">My Group Travel Expeditions</h2>
+                  <p className="text-xs text-slate-500">
+                    Active multi-origin group itineraries where you are an organizer or invited traveler.
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href="/group-booking"
+                className="flex items-center gap-1 text-xs font-bold text-purple-700 hover:text-purple-900 transition"
+              >
+                <span>View All In Group Hub</span>
+                <ChevronRight size={14} />
+              </Link>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {userGroups.map((g) => {
+                const isOrganizer = g.organizerId === user.id;
+                return (
+                  <div
+                    key={g.id}
+                    className="flex flex-col justify-between rounded-2xl border border-purple-200/80 bg-white p-4 shadow-2xs hover:shadow-xs transition"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-mono text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                          {g.status.replace(/_/g, " ")}
+                        </span>
+                        <span className="rounded px-2 py-0.5 text-[9px] font-bold uppercase font-mono bg-slate-100 text-slate-700">
+                          {isOrganizer ? "Organizer" : "Traveler"}
+                        </span>
+                      </div>
+
+                      <h4 className="mt-2 text-sm font-bold text-[#021024]">{g.name}</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {g.destination?.city ? `Destination: ${g.destination.city} (${g.destination.code})` : "Selecting Hub Destination"}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
+                      <span className="text-slate-500 font-medium">
+                        {g.members?.length || 0} Travelers
+                      </span>
+                      <Link
+                        href={`/group-booking/${g.id}`}
+                        className="inline-flex items-center gap-1 font-bold text-[#052659] hover:underline"
+                      >
+                        <span>Workspace</span>
+                        <ChevronRight size={13} />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* BOOKING HISTORY SECTION */}
-        <div className="mt-8 rounded-3xl border border-slate-200/80 bg-white p-7 shadow-sm">
+        <div className="mt-8 rounded-3xl border border-slate-200/80 bg-white/90 backdrop-blur-xs p-7 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-base font-extrabold text-[#021024]">Flight Booking History</h2>
@@ -377,35 +528,68 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs">
-              <button
-                type="button"
-                onClick={() => setActiveFilter("ALL")}
-                className={`rounded-lg px-3 py-1 font-bold transition ${
-                  activeFilter === "ALL" ? "bg-white text-[#052659] shadow-2xs" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                All ({bookings.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFilter("CONFIRMED")}
-                className={`rounded-lg px-3 py-1 font-bold transition ${
-                  activeFilter === "CONFIRMED" ? "bg-white text-emerald-700 shadow-2xs" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                Confirmed ({bookings.filter((b) => b.status === "CONFIRMED").length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFilter("CANCELLED")}
-                className={`rounded-lg px-3 py-1 font-bold transition ${
-                  activeFilter === "CANCELLED" ? "bg-white text-rose-700 shadow-2xs" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                Cancelled ({bookings.filter((b) => b.status === "CANCELLED").length})
-              </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Trip Type Filter */}
+              <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setTripTypeFilter("ALL")}
+                  className={`rounded-lg px-2.5 py-1 font-bold transition ${
+                    tripTypeFilter === "ALL" ? "bg-white text-[#052659] shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  All Types
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTripTypeFilter("SOLO")}
+                  className={`rounded-lg px-2.5 py-1 font-bold transition ${
+                    tripTypeFilter === "SOLO" ? "bg-white text-[#052659] shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  Solo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTripTypeFilter("GROUP")}
+                  className={`rounded-lg px-2.5 py-1 font-bold transition ${
+                    tripTypeFilter === "GROUP" ? "bg-white text-purple-700 shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  Group
+                </button>
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter("ALL")}
+                  className={`rounded-lg px-2.5 py-1 font-bold transition ${
+                    activeFilter === "ALL" ? "bg-white text-[#052659] shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  All ({bookings.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter("CONFIRMED")}
+                  className={`rounded-lg px-2.5 py-1 font-bold transition ${
+                    activeFilter === "CONFIRMED" ? "bg-white text-emerald-700 shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  Confirmed ({bookings.filter((b) => b.status === "CONFIRMED").length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter("CANCELLED")}
+                  className={`rounded-lg px-2.5 py-1 font-bold transition ${
+                    activeFilter === "CANCELLED" ? "bg-white text-rose-700 shadow-2xs" : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  Cancelled ({bookings.filter((b) => b.status === "CANCELLED").length})
+                </button>
+              </div>
             </div>
           </div>
 
@@ -416,15 +600,24 @@ export default function ProfilePage() {
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
                 {activeFilter === "ALL"
                   ? "You haven't completed any bookings yet. Search flights or launch a group convergence session to book."
-                  : `No ${activeFilter.toLowerCase()} reservations in your account.`}
+                  : `No ${activeFilter.toLowerCase()} reservations matching your filter.`}
               </p>
-              <Link
-                href="/flights"
-                className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-[#052659] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#021024] transition"
-              >
-                <Plane size={13} />
-                <span>Explore Flight Deals</span>
-              </Link>
+              <div className="flex justify-center gap-2 pt-1">
+                <Link
+                  href="/flights"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#052659] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#021024] transition"
+                >
+                  <Plane size={13} />
+                  <span>Book Solo Flight</span>
+                </Link>
+                <Link
+                  href="/group-booking"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50 px-4 py-2 text-xs font-bold text-purple-700 shadow-2xs hover:bg-purple-100 transition"
+                >
+                  <Users size={13} />
+                  <span>Create Group Trip</span>
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="mt-5 space-y-4">
@@ -440,6 +633,29 @@ export default function ProfilePage() {
                         : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-xs"
                     }`}
                   >
+                    {/* Group Badge Banner if part of a group booking */}
+                    {b.isGroupBooking && (
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-purple-100 pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2.5 py-0.5 text-[10px] font-bold text-purple-700">
+                            <Users size={11} /> Group Trip: {b.groupName || "Group Expedition"}
+                          </span>
+                          <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 uppercase font-mono">
+                            Role: {b.travelerRole || "Member"}
+                          </span>
+                        </div>
+                        {b.groupId && (
+                          <Link
+                            href={`/group-booking/${b.groupId}`}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-[#052659] hover:underline"
+                          >
+                            <span>Open Group Workspace</span>
+                            <ExternalLink size={11} />
+                          </Link>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       {/* Carrier & Flight Header */}
                       <div className="flex items-center gap-3">
@@ -549,6 +765,19 @@ export default function ProfilePage() {
                 </button>
               </div>
 
+              {/* If Group Trip, Banner in Boarding Pass */}
+              {viewingBooking.isGroupBooking && (
+                <div className="flex items-center justify-between rounded-xl bg-purple-50 p-2.5 border border-purple-200 text-xs font-semibold text-purple-800">
+                  <div className="flex items-center gap-1.5">
+                    <Users size={14} className="text-purple-600" />
+                    <span>Group Booking: <strong>{viewingBooking.groupName || "Group Expedition"}</strong></span>
+                  </div>
+                  <span className="font-mono text-[10px] uppercase font-bold text-purple-700">
+                    Role: {viewingBooking.travelerRole || "Traveler"}
+                  </span>
+                </div>
+              )}
+
               {/* Boarding Pass Box */}
               <div className="overflow-hidden rounded-2xl border-2 border-slate-900 bg-white shadow-md">
                 <div className="flex items-center justify-between bg-slate-900 px-5 py-3 text-white">
@@ -642,7 +871,7 @@ export default function ProfilePage() {
               <div>
                 <h3 className="text-base font-bold text-[#021024]">Cancel Flight Reservation?</h3>
                 <p className="mt-1 text-xs text-slate-500">
-                  This will void the Two-Phase Escrow hold with 100% full refund and release the assigned seats back to the carrier pool.
+                  This will process a 100% full refund to your original payment method and release the assigned seats back to airline inventory.
                 </p>
               </div>
 

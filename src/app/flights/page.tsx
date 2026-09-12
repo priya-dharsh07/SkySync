@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -17,6 +18,8 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageBackground from "@/components/layout/PageBackground";
+import flightsBg from "@/bgs/image2.png";
 
 import { AIRPORTS, Airport as AirportItem } from "@/lib/convergence/airports";
 
@@ -66,52 +69,40 @@ export default function FlightsPage() {
   const [showToSuggestions, setShowToSuggestions] = useState(false);
 
   useEffect(() => {
-    fetchFlights();
+    async function loadInitial() {
+      await fetchFlights();
+    }
+    loadInitial();
   }, []);
 
-  async function fetchFlights(searchParams?: { from?: string; to?: string; date?: string; passengers?: number }) {
+  async function fetchFlights(params?: { from?: string; to?: string; date?: string; passengers?: number }) {
     try {
       setLoading(true);
       setError("");
 
       const url = new URL("/api/flights", window.location.origin);
-      if (searchParams?.from) url.searchParams.set("from", searchParams.from);
-      if (searchParams?.to) url.searchParams.set("to", searchParams.to);
-      if (searchParams?.date) url.searchParams.set("departureDate", searchParams.date);
-      if (searchParams?.passengers) url.searchParams.set("passengers", String(searchParams.passengers));
+      if (params?.from) url.searchParams.set("from", params.from);
+      if (params?.to) url.searchParams.set("to", params.to);
+      if (params?.date) url.searchParams.set("date", params.date);
+      if (params?.passengers) url.searchParams.set("passengers", String(params.passengers));
 
-      const response = await fetch(url.toString(), {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch flights");
-      }
-
-      const data = await response.json();
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error("Failed to load flights");
+      const data = await res.json();
       setFlights(data.flights || []);
-    } catch (error) {
-      console.error(error);
-      setError("Unable to load flight network. Please try again.");
+    } catch (err: any) {
+      setError(err.message || "Failed to load flights");
     } finally {
       setLoading(false);
     }
   }
 
   // Global airports list for autocomplete dropdowns
-  const availableAirports = useMemo(() => {
-    return AIRPORTS.map((a) => ({
-      code: a.code,
-      city: a.city,
-      country: a.country,
-      name: a.name,
-    })).sort((a, b) => a.city.localeCompare(b.city));
-  }, []);
+  const availableAirports = AIRPORTS;
 
   const filteredOrigins = useMemo(() => {
-    const query = from.trim().toLowerCase();
-    if (!query) return availableAirports.slice(0, 8);
+    if (!from.trim()) return [];
+    const query = from.toLowerCase().trim();
     return availableAirports
       .filter(
         (a) =>
@@ -123,8 +114,8 @@ export default function FlightsPage() {
   }, [availableAirports, from]);
 
   const filteredDestinations = useMemo(() => {
-    const query = to.trim().toLowerCase();
-    if (!query) return availableAirports.slice(0, 8);
+    if (!to.trim()) return [];
+    const query = to.toLowerCase().trim();
     return availableAirports
       .filter(
         (a) =>
@@ -177,29 +168,27 @@ export default function FlightsPage() {
       if (searchFrom) {
         const search = searchFrom.trim().toLowerCase();
         result = result.filter(
-          (f) => f.originCode.toLowerCase() === search || f.origin.toLowerCase() === search
+          (f) =>
+            f.originCode.toLowerCase() === search ||
+            f.origin.toLowerCase().includes(search)
         );
       }
       if (searchTo) {
         const search = searchTo.trim().toLowerCase();
         result = result.filter(
-          (f) => f.destinationCode.toLowerCase() === search || f.destination.toLowerCase() === search
+          (f) =>
+            f.destinationCode.toLowerCase() === search ||
+            f.destination.toLowerCase().includes(search)
         );
       }
       if (searchDepartureDate) {
-        result = result.filter((f) => {
-          const fDate = new Date(f.departureDate).toISOString().split("T")[0];
-          return fDate === searchDepartureDate;
-        });
+        result = result.filter((f) => f.departureDate === searchDepartureDate);
       }
-      result = result.filter((f) => f.availableSeats >= searchPassengers);
     }
 
     if (tripType !== "all") {
       result = result.filter((f) => f.type === tripType);
     }
-
-    result = result.filter((f) => f.status !== "cancelled");
 
     result.sort((a, b) => {
       if (sortBy === "price") return a.price - b.price;
@@ -208,7 +197,7 @@ export default function FlightsPage() {
     });
 
     return result;
-  }, [flights, searchPerformed, searchFrom, searchTo, searchDepartureDate, searchPassengers, tripType, sortBy]);
+  }, [flights, searchPerformed, searchFrom, searchTo, searchDepartureDate, tripType, sortBy]);
 
   function selectFlight(flight: Flight) {
     const selectedPassengerCount = searchPerformed ? searchPassengers : passengers;
@@ -229,12 +218,43 @@ export default function FlightsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
+    <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
+      <PageBackground
+        image={flightsBg}
+        alt="Flights Background"
+      />
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+      <main className="relative z-10 mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
+        {/* Scenic Flight Search Banner */}
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 mb-6 p-6 sm:p-8 shadow-md text-white">
+          <div className="absolute inset-0 z-0 select-none">
+            <Image
+              src={flightsBg}
+              alt="SkySync Global Flights"
+              fill
+              priority
+              className="object-cover object-center scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#021024]/90 via-[#052659]/80 to-[#021024]/75" />
+          </div>
+
+          <div className="relative z-10 max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-white/10 px-3 py-0.5 text-[11px] font-bold text-[#C1E8FF] backdrop-blur-md">
+              <Plane size={13} />
+              <span>Real-Time Airline Schedule Search</span>
+            </div>
+            <h1 className="mt-2 text-2xl font-extrabold text-white sm:text-3xl">
+              Explore Live Scheduled Flights
+            </h1>
+            <p className="mt-1 text-xs text-blue-100/85">
+              Compare non-stop and connecting routes across leading international carriers with verified seat allocations.
+            </p>
+          </div>
+        </div>
+
         {/* Search Header Form */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-2xs p-5 shadow-sm">
           <form onSubmit={handleSearch}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto_auto]">
               {/* FROM */}

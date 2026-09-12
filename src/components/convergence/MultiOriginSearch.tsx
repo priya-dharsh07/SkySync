@@ -37,42 +37,10 @@ interface SiteUser {
   country?: string;
 }
 
-const PRESET_GROUPS = [
-  {
-    name: "Global Tech Team",
-    desc: "New York + London + Tokyo",
-    travelers: [
-      { id: "t-1", name: "Alex Chen", originAirportCode: "JFK", departureDate: "2026-10-15" },
-      { id: "t-2", name: "Emma Watson", originAirportCode: "LHR", departureDate: "2026-10-15" },
-      { id: "t-3", name: "Kenji Sato", originAirportCode: "HND", departureDate: "2026-10-15" },
-    ],
-  },
-  {
-    name: "India Multi-City Group",
-    desc: "Chennai + Delhi + Mumbai + Bengaluru",
-    travelers: [
-      { id: "t-1", name: "Priya Sundaram", originAirportCode: "MAA", departureDate: "2026-10-15" },
-      { id: "t-2", name: "Rohan Verma", originAirportCode: "DEL", departureDate: "2026-10-15" },
-      { id: "t-3", name: "Ananya Iyer", originAirportCode: "BOM", departureDate: "2026-10-15" },
-      { id: "t-4", name: "Karthik Nair", originAirportCode: "BLR", departureDate: "2026-10-15" },
-    ],
-  },
-  {
-    name: "Euro-American Founders",
-    desc: "San Francisco + Paris + Frankfurt",
-    travelers: [
-      { id: "t-1", name: "Sarah Jenkins", originAirportCode: "SFO", departureDate: "2026-10-15" },
-      { id: "t-2", name: "Lucas Moreau", originAirportCode: "CDG", departureDate: "2026-10-15" },
-      { id: "t-3", name: "Maximilian Koch", originAirportCode: "FRA", departureDate: "2026-10-15" },
-    ],
-  },
-];
-
 export default function MultiOriginSearch({ onSearch, loading }: MultiOriginSearchProps) {
   const [travelers, setTravelers] = useState<TravelerOrigin[]>([
-    { id: "t-1", name: "Priya (Organizer)", originAirportCode: "DEL", departureDate: "2026-10-15" },
-    { id: "t-2", name: "Marcus (Member)", originAirportCode: "LHR", departureDate: "2026-10-15" },
-    { id: "t-3", name: "Yuki (Member)", originAirportCode: "SIN", departureDate: "2026-10-15" },
+    { id: "t-1", name: "Primary Traveler", originAirportCode: "DEL", departureDate: "2026-10-15" },
+    { id: "t-2", name: "Traveler 2", originAirportCode: "BOM", departureDate: "2026-10-15" },
   ]);
 
   const [activeAirportSelector, setActiveAirportSelector] = useState<string | null>(null);
@@ -97,21 +65,41 @@ export default function MultiOriginSearch({ onSearch, loading }: MultiOriginSear
   const [showWeightSliders, setShowWeightSliders] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Fetch site users when user picker is opened
+  // Load authenticated user on mount to set Traveler 1 accurately
   useEffect(() => {
-    if (showUserPicker && siteUsers.length === 0) {
-      setLoadingUsers(true);
-      fetch("/api/users")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && Array.isArray(data.users)) {
-            setSiteUsers(data.users);
-          }
-        })
-        .catch((err) => console.error("Failed to load site users:", err))
-        .finally(() => setLoadingUsers(false));
-    }
-  }, [showUserPicker, siteUsers.length]);
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          const u = data.user;
+          setTravelers((prev) => {
+            const copy = [...prev];
+            copy[0] = {
+              id: `user-${u.id}`,
+              name: `${u.name} (Organizer)`,
+              originAirportCode: u.homeAirport || "DEL",
+              departureDate: copy[0]?.departureDate || "2026-10-15",
+            };
+            return copy;
+          });
+        }
+      })
+      .catch((err) => console.warn("Could not load current user:", err));
+  }, []);
+
+  // Fetch registered site users
+  useEffect(() => {
+    setLoadingUsers(true);
+    fetch("/api/users")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.users)) {
+          setSiteUsers(data.users);
+        }
+      })
+      .catch((err) => console.error("Failed to load site users:", err))
+      .finally(() => setLoadingUsers(false));
+  }, [showUserPicker]);
 
   // One-click Browser Geolocation Detection
   function handleDetectMyLocation(targetTravelerId?: string) {
@@ -207,11 +195,6 @@ export default function MultiOriginSearch({ onSearch, loading }: MultiOriginSear
     setTravelers(travelers.map(t => ({ ...t, departureDate: date })));
   }
 
-  function applyPreset(preset: typeof PRESET_GROUPS[0]) {
-    setTravelers(JSON.parse(JSON.stringify(preset.travelers)));
-    setErrorMessage(null);
-  }
-
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     const originCodes = travelers.map(t => t.originAirportCode.toUpperCase());
@@ -273,7 +256,7 @@ export default function MultiOriginSearch({ onSearch, loading }: MultiOriginSear
             className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-[#052659] hover:bg-blue-100 transition shadow-2xs"
           >
             <UserPlus size={14} className="text-[#5483B3]" />
-            <span>Add Site User</span>
+            <span>Add Registered User</span>
           </button>
 
           {/* Weight Sliders Toggle */}
@@ -292,20 +275,30 @@ export default function MultiOriginSearch({ onSearch, loading }: MultiOriginSear
         </div>
       </div>
 
-      {/* Preset Scenarios */}
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-[11px] font-semibold text-slate-400">Quick Scenarios:</span>
-        {PRESET_GROUPS.map((preset, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => applyPreset(preset)}
-            className="rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
-          >
-            {preset.name}
-          </button>
-        ))}
-      </div>
+      {/* Quick Add from Registered Database Users */}
+      {siteUsers.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-[11px] font-semibold text-slate-400">Database Travelers:</span>
+          {siteUsers.slice(0, 5).map((user) => {
+            const alreadyIn = travelers.some(t => t.id === `user-${user.id}`);
+            return (
+              <button
+                key={user.id}
+                type="button"
+                onClick={() => addSiteUserToGroup(user)}
+                disabled={alreadyIn}
+                className={`rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition ${
+                  alreadyIn
+                    ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed"
+                    : "border-blue-200 bg-blue-50/70 text-[#052659] hover:bg-blue-100"
+                }`}
+              >
+                + {user.name} ({user.homeAirport || "DEL"})
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Location Detected Notice */}
       {locationNotice && (

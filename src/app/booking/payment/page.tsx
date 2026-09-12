@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,6 +30,8 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageBackground from "@/components/layout/PageBackground";
+import paymentBg from "@/bgs/image3.png";
 
 type PaymentMethodType = "CARD" | "UPI" | "NETBANKING" | "WALLET";
 type TransactionStatus = "IDLE" | "PROCESSING" | "SUCCESS" | "FAILED" | "TIMEOUT";
@@ -257,12 +260,18 @@ export default function PaymentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#021024]">
+    <div className="relative min-h-screen bg-[#F8FAFC] text-[#021024]">
       <div className="print:hidden">
+        <PageBackground
+          image={paymentBg}
+          alt="Payment Checkout Background"
+          opacityClass="opacity-[0.14]"
+          overlayClass="bg-gradient-to-b from-white/70 via-slate-50/70 to-slate-100/85"
+        />
         <Navbar />
       </div>
 
-      <main className="mx-auto max-w-6xl px-4 pt-24 pb-20 sm:px-6 lg:px-8">
+      <main className="relative z-10 mx-auto max-w-6xl px-4 pt-24 pb-20 sm:px-6 lg:px-8">
         {/* Navigation back and Stepper */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 print:hidden">
           <Link
@@ -790,6 +799,31 @@ export default function PaymentPage() {
 
             {/* Right Column: Flight Order Summary & Itemized Breakdown */}
             <aside className="space-y-4">
+              {/* Photographic Flight Journey Preview Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 p-4 shadow-sm text-white min-h-[140px] flex flex-col justify-end">
+                <div className="absolute inset-0 z-0 select-none">
+                  <Image
+                    src={paymentBg}
+                    alt="Flight Journey Route"
+                    fill
+                    priority
+                    className="object-cover object-center scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#021024]/95 via-[#052659]/75 to-transparent" />
+                </div>
+                <div className="relative z-10">
+                  <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-mono text-[9px] font-bold text-white border border-white/20 backdrop-blur-md uppercase">
+                    Direct Route • Verified Seat Hold
+                  </span>
+                  <div className="mt-1.5 flex items-baseline justify-between">
+                    <span className="text-base font-extrabold tracking-tight">
+                      {flight?.originCode || "DEL"} → {flight?.destinationCode || "BOM"}
+                    </span>
+                    <span className="font-mono text-sm font-bold text-[#C1E8FF]">₹{grandTotal}</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-[#021024]">
