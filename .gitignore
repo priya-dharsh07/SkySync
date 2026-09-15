@@ -18,4 +18,4 @@ build/
 *.log
 .DS_Store
 
-.env.local
+.env.localtsconfig.tsbuildinfo

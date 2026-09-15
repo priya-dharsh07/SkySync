@@ -17,34 +17,38 @@ const cached: MongooseCache = global.mongooseCache || {
 
 global.mongooseCache = cached;
 
-function getMongoURI(): string {
-  const uri = process.env.MONGODB_URI;
-
-  if (!uri) {
-    throw new Error(
-      "MONGODB_URI is not defined in .env.local"
-    );
-  }
-
-  return uri;
+function getMongoURI(): string | undefined {
+  return process.env.MONGODB_URI;
 }
 
-async function connectDB(): Promise<typeof mongoose> {
+async function connectDB(): Promise<typeof mongoose | null> {
+  const uri = getMongoURI();
+  if (!uri) {
+    console.warn("MONGODB_URI is not set in environment.");
+    return null;
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
-    const uri = getMongoURI();
-
-    cached.promise = mongoose.connect(uri);
+    cached.promise = mongoose.connect(uri, {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 2500,
+    });
   }
 
-  cached.conn = await cached.promise;
-
-  console.log("MongoDB connected successfully");
-
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    console.log("MongoDB connected successfully");
+    return cached.conn;
+  } catch (err: any) {
+    console.error("MongoDB connection error in connectDB:", err?.message || err);
+    cached.promise = null;
+    return null;
+  }
 }
 
 export default connectDB;

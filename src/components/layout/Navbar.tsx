@@ -8,6 +8,11 @@ import {
   X,
   LogOut,
   User,
+  ShieldCheck,
+  Compass,
+  Layers,
+  Sparkles,
+  Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -16,12 +21,10 @@ type CurrentUser = {
   id: string;
   name: string;
   email: string;
-  createdAt?: string;
 };
 
 export default function Navbar() {
   const router = useRouter();
-
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -30,7 +33,6 @@ export default function Navbar() {
   async function getCurrentUser() {
     try {
       setLoadingUser(true);
-
       const response = await fetch("/api/auth/me", {
         method: "GET",
         cache: "no-store",
@@ -43,14 +45,8 @@ export default function Navbar() {
       }
 
       const data = await response.json();
-
       setUser(data.user || null);
-    } catch (error) {
-      console.error(
-        "Unable to get current user:",
-        error
-      );
-
+    } catch {
       setUser(null);
     } finally {
       setLoadingUser(false);
@@ -74,315 +70,189 @@ export default function Navbar() {
     setUser(null);
     setProfileOpen(false);
     setOpen(false);
-
     router.push("/");
     router.refresh();
   }
 
-  const firstLetter =
-    user?.name?.charAt(0).toUpperCase() || "U";
+  const firstLetter = user?.name?.charAt(0).toUpperCase() || "U";
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/20 bg-white/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-
+    <header className="fixed left-0 right-0 top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
         {/* LOGO */}
-        <Link
-          href="/"
-          className="flex items-center gap-3"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#355CFF] text-white shadow-lg shadow-blue-500/20">
-            <Plane
-              size={21}
-              strokeWidth={2.5}
-            />
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#052659] text-white shadow-sm">
+            <Plane size={18} strokeWidth={2.2} />
           </div>
 
           <div>
-            <div className="text-xl font-extrabold tracking-tight text-gray-950">
-              Sky
-              <span className="text-[#355CFF]">
-                Sync
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold tracking-tight text-[#021024]">
+                Sky<span className="text-[#5483B3]">Sync</span>
               </span>
-            </div>
-
-            <div className="text-[9px] font-semibold uppercase tracking-[0.22em] text-gray-400">
-              Travel intelligently
+              <span className="rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-700">
+                <Sparkles size={10} className="inline mr-0.5" /> Pareto Engine
+              </span>
             </div>
           </div>
         </Link>
 
         {/* DESKTOP NAVIGATION */}
-        <nav className="hidden items-center gap-8 md:flex">
-
+        <nav className="hidden items-center gap-1 md:flex">
           <Link
-            href="/"
-            className="text-sm font-semibold text-gray-700 transition hover:text-[#355CFF]"
+            href="/group-booking"
+            className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-[#052659]"
           >
-            Explore
+            <Users size={14} className="text-[#5483B3]" />
+            Group Booking
           </Link>
 
           <Link
             href="/flights"
-            className="text-sm font-semibold text-gray-700 transition hover:text-[#355CFF]"
+            className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-[#052659]"
           >
+            <Plane size={14} className="text-slate-400" />
             Flights
           </Link>
 
           <Link
-            href="/trips"
-            className="text-sm font-semibold text-gray-700 transition hover:text-[#355CFF]"
+            href="#engine-architecture"
+            className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-[#052659]"
           >
-            My Trips
+            <Layers size={14} className="text-slate-400" />
+            How It Works
           </Link>
-
-          <Link
-            href="/deals"
-            className="text-sm font-semibold text-gray-700 transition hover:text-[#355CFF]"
-          >
-            Deals
-          </Link>
-
         </nav>
 
-        {/* DESKTOP USER AREA */}
+        {/* USER PROFILE & ACTIONS */}
         <div className="hidden items-center gap-3 md:flex">
-
           {loadingUser ? (
-            <div className="h-10 w-28 animate-pulse rounded-xl bg-gray-100" />
+            <div className="h-8 w-20 animate-pulse rounded-lg bg-slate-100" />
           ) : user ? (
-
-            /* LOGGED IN */
             <div className="relative">
-
               <button
                 type="button"
-                onClick={() =>
-                  setProfileOpen(!profileOpen)
-                }
-                className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 py-2 transition hover:border-blue-200 hover:shadow-sm"
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
-
-                {/* Avatar */}
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#355CFF] text-sm font-extrabold text-white">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#052659] text-[11px] font-bold text-white">
                   {firstLetter}
                 </div>
-
-                <div className="text-left">
-                  <p className="max-w-[120px] truncate text-sm font-bold text-gray-900">
-                    {user.name}
-                  </p>
-
-                  <p className="max-w-[150px] truncate text-xs text-gray-400">
-                    {user.email}
-                  </p>
-                </div>
-
+                <span>{user.name}</span>
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-[calc(100%+10px)] w-64 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
-
-                  {/* User info */}
-                  <div className="border-b border-gray-100 p-4">
-
-                    <div className="flex items-center gap-3">
-
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#355CFF] font-extrabold text-white">
-                        {firstLetter}
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="truncate font-bold text-gray-950">
-                          {user.name}
-                        </p>
-
-                        <p className="truncate text-xs text-gray-400">
-                          {user.email}
-                        </p>
-                      </div>
-
-                    </div>
-
+                <div className="absolute right-0 top-[calc(100%+8px)] w-56 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                  <div className="border-b border-slate-100 px-3 py-2">
+                    <p className="text-xs font-bold text-[#021024]">{user.name}</p>
+                    <p className="truncate text-[11px] text-slate-500">{user.email}</p>
                   </div>
-
-                  {/* Profile */}
                   <Link
                     href="/profile"
-                    onClick={() =>
-                      setProfileOpen(false)
-                    }
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50"
+                    onClick={() => setProfileOpen(false)}
+                    className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    <User size={17} />
-                    My Profile
+                    <User size={14} className="text-slate-400" /> My Profile & Bookings
                   </Link>
-
-                  {/* Trips */}
                   <Link
-                    href="/trips"
-                    onClick={() =>
-                      setProfileOpen(false)
-                    }
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50"
+                    href="/group-booking"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    <Plane size={17} />
-                    My Trips
+                    <Users size={14} className="text-slate-400" /> Group Trips
                   </Link>
-
-                  <div className="border-t border-gray-100" />
-
-                  {/* Logout */}
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-rose-600 hover:bg-rose-50"
                   >
-                    <LogOut size={17} />
-                    Sign out
+                    <LogOut size={14} /> Sign Out
                   </button>
-
                 </div>
               )}
-
             </div>
-
           ) : (
-
-            /* LOGGED OUT */
-            <>
+            <div className="flex items-center gap-2">
               <Link
                 href="/login"
-                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:text-[#052659]"
               >
-                <UserRound size={17} />
                 Sign in
               </Link>
-
               <Link
                 href="/register"
-                className="rounded-xl bg-[#355CFF] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-[#2447DF]"
+                className="rounded-xl bg-[#052659] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#021024]"
               >
-                Create account
+                Get Started
               </Link>
-            </>
-
+            </div>
           )}
-
         </div>
 
-        {/* MOBILE MENU BUTTON */}
+        {/* MOBILE MENU TOGGLE */}
         <button
           onClick={() => setOpen(!open)}
-          className="rounded-xl p-2 text-gray-700 md:hidden"
+          className="rounded-lg border border-slate-200 p-1.5 text-slate-700 md:hidden hover:bg-slate-50"
         >
-          {open ? (
-            <X size={24} />
-          ) : (
-            <Menu size={24} />
-          )}
+          {open ? <X size={20} /> : <Menu size={20} />}
         </button>
-
       </div>
 
       {/* MOBILE MENU */}
       {open && (
-        <div className="border-t border-gray-100 bg-white px-6 py-5 md:hidden">
-
-          <nav className="flex flex-col gap-4">
-
+        <div className="border-b border-slate-200 bg-white px-6 py-4 md:hidden">
+          <nav className="flex flex-col gap-2 text-xs font-medium">
             <Link
-              href="/"
+              href="/group-booking"
               onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 font-bold hover:bg-slate-50"
             >
-              Explore
+              <Users size={15} className="text-[#5483B3]" /> Group Booking
             </Link>
-
             <Link
               href="/flights"
               onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-50"
             >
-              Flights
+              <Plane size={15} className="text-slate-400" /> Flights
             </Link>
-
             <Link
-              href="/trips"
+              href="#engine-architecture"
               onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-50"
             >
-              My Trips
+              <Layers size={15} className="text-slate-400" /> How It Works
             </Link>
-
-            <Link
-              href="/deals"
-              onClick={() => setOpen(false)}
-            >
-              Deals
-            </Link>
-
-            <hr />
-
+            <div className="my-1 border-t border-slate-100" />
             {user ? (
-              <>
-                <div className="flex items-center gap-3">
-
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#355CFF] font-bold text-white">
-                    {firstLetter}
-                  </div>
-
-                  <div>
-                    <p className="font-bold text-gray-900">
-                      {user.name}
-                    </p>
-
-                    <p className="text-xs text-gray-400">
-                      {user.email}
-                    </p>
-                  </div>
-
-                </div>
-
-                <Link
-                  href="/profile"
-                  onClick={() =>
-                    setOpen(false)
-                  }
-                  className="rounded-xl bg-gray-100 px-4 py-3 text-center font-semibold"
-                >
-                  My Profile
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="rounded-xl bg-red-50 px-4 py-3 text-center font-semibold text-red-600"
-                >
-                  Sign out
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-rose-600"
+              >
+                <LogOut size={15} /> Sign out
+              </button>
             ) : (
-              <>
+              <div className="flex gap-2 pt-2">
                 <Link
                   href="/login"
                   onClick={() => setOpen(false)}
+                  className="flex-1 rounded-lg border border-slate-200 py-2 text-center text-xs font-semibold text-slate-700"
                 >
                   Sign in
                 </Link>
-
                 <Link
                   href="/register"
                   onClick={() => setOpen(false)}
-                  className="rounded-xl bg-[#355CFF] px-4 py-3 text-center font-semibold text-white"
+                  className="flex-1 rounded-lg bg-[#052659] py-2 text-center text-xs font-bold text-white"
                 >
-                  Create account
+                  Register
                 </Link>
-              </>
+              </div>
             )}
-
           </nav>
-
         </div>
       )}
-
     </header>
   );
 }

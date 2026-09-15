@@ -4,6 +4,11 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  homeAirport?: string;
+  homeCity?: string;
+  country?: string;
+  lat?: number;
+  lng?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +35,35 @@ const UserSchema = new Schema<IUser>(
       type: String,
       required: true,
       minlength: 6,
+    },
+
+    homeAirport: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: "DEL",
+    },
+
+    homeCity: {
+      type: String,
+      trim: true,
+      default: "New Delhi",
+    },
+
+    country: {
+      type: String,
+      trim: true,
+      default: "India",
+    },
+
+    lat: {
+      type: Number,
+      default: 28.5562,
+    },
+
+    lng: {
+      type: Number,
+      default: 77.1000,
     },
   },
   {
