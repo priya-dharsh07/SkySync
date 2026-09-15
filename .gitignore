@@ -17,5 +17,6 @@ build/
 
 *.log
 .DS_Store
+/.data
 
 .env.localtsconfig.tsbuildinfo
