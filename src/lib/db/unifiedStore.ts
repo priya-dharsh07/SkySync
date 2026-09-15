@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 import connectDB from "@/lib/mongodb";
-import User, { IUser } from "@/models/User";
-import Booking, { IBooking } from "@/models/Booking";
-import GroupBooking, { IGroupBooking } from "@/models/GroupBooking";
+import User from "@/models/User";
+import Booking from "@/models/Booking";
+import GroupBooking from "@/models/GroupBooking";
 
 export interface StoredUser {
   id: string;
@@ -92,17 +92,15 @@ interface StoreSchema {
 const DATA_DIR = path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "db_store.json");
 
+// ----------------- JSON FILE DB READ/WRITE HELPERS -----------------
+
 function readLocalStore(): StoreSchema {
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     if (!fs.existsSync(DATA_FILE)) {
-      const initial: StoreSchema = {
-        users: [],
-        bookings: [],
-        groupBookings: [],
-      };
+      const initial: StoreSchema = { users: [], bookings: [], groupBookings: [] };
       fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2), "utf-8");
       return initial;
     }
@@ -130,6 +128,41 @@ function writeLocalStore(store: StoreSchema) {
   }
 }
 
+// Helper to keep local JSON in sync when MongoDB succeeds
+function syncUserToLocalStore(user: StoredUser) {
+  const store = readLocalStore();
+  const idx = store.users.findIndex((u) => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
+  if (idx >= 0) {
+    store.users[idx] = user;
+  } else {
+    store.users.unshift(user);
+  }
+  writeLocalStore(store);
+}
+
+function syncBookingToLocalStore(booking: StoredBooking) {
+  const store = readLocalStore();
+  const idx = store.bookings.findIndex((b) => b._id === booking._id || b.bookingReference === booking.bookingReference);
+  if (idx >= 0) {
+    store.bookings[idx] = booking;
+  } else {
+    store.bookings.unshift(booking);
+  }
+  writeLocalStore(store);
+}
+
+function syncGroupBookingToLocalStore(group: StoredGroupBooking) {
+  const store = readLocalStore();
+  const idx = store.groupBookings.findIndex((gb) => gb.groupId === group.groupId || gb._id === group._id);
+  if (idx >= 0) {
+    store.groupBookings[idx] = group;
+  } else {
+    store.groupBookings.unshift(group);
+  }
+  writeLocalStore(store);
+}
+
+// Document Mappers
 function mapUserDoc(doc: any): StoredUser {
   return {
     id: doc._id ? doc._id.toString() : doc.id,
@@ -199,7 +232,7 @@ function mapGroupBookingDoc(doc: any): StoredGroupBooking {
   };
 }
 
-// ----------------- USER HELPERS -----------------
+// =---------------- USER OPERATIONS ----------------=
 
 export async function findUsers(query?: string): Promise<StoredUser[]> {
   try {
@@ -219,7 +252,7 @@ export async function findUsers(query?: string): Promise<StoredUser[]> {
       return (docs || []).map(mapUserDoc);
     }
   } catch (e) {
-    console.warn("findUsers MongoDB error, using fallback store:", e);
+    console.warn("findUsers MongoDB error, falling back to JSON DB:", e);
   }
 
   const store = readLocalStore();
@@ -250,7 +283,9 @@ export async function findUserById(id: string): Promise<StoredUser | null> {
       }
       if (doc) return mapUserDoc(doc);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("findUserById MongoDB error, falling back to JSON DB:", e);
+  }
 
   const store = readLocalStore();
   return store.users.find((u) => u.id === id) || null;
@@ -265,7 +300,9 @@ export async function findUserByEmail(email: string): Promise<StoredUser | null>
       const doc = await User.findOne({ email: norm }).lean();
       if (doc) return mapUserDoc(doc);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("findUserByEmail MongoDB error, falling back to JSON DB:", e);
+  }
 
   const store = readLocalStore();
   return store.users.find((u) => u.email.toLowerCase() === norm) || null;
@@ -273,17 +310,46 @@ export async function findUserByEmail(email: string): Promise<StoredUser | null>
 
 export async function saveUser(userData: Partial<StoredUser>): Promise<StoredUser> {
   const normEmail = userData.email?.trim().toLowerCase();
-  const store = readLocalStore();
+  const now = new Date().toISOString();
 
+  // Try MongoDB FIRST
+  try {
+    const conn = await connectDB();
+    if (conn && conn.connection.readyState === 1 && normEmail) {
+      const doc = await User.findOneAndUpdate(
+        { email: normEmail },
+        {
+          name: userData.name || "SkySync Traveler",
+          email: normEmail,
+          ...(userData.password ? { password: userData.password } : {}),
+          homeAirport: (userData.homeAirport || "DEL").toUpperCase(),
+          homeCity: userData.homeCity || "New Delhi",
+          country: userData.country || "India",
+          lat: userData.lat ?? 28.5562,
+          lng: userData.lng ?? 77.1,
+        },
+        { upsert: true, new: true }
+      ).lean();
+
+      if (doc) {
+        const mongoUser = mapUserDoc(doc);
+        syncUserToLocalStore(mongoUser);
+        return mongoUser;
+      }
+    }
+  } catch (e) {
+    console.warn("saveUser MongoDB error, falling back to JSON DB:", e);
+  }
+
+  // Fallback to JSON DB
+  const store = readLocalStore();
   const existingIdx = store.users.findIndex(
     (u) =>
       (userData.id && u.id === userData.id) ||
       (normEmail && u.email.toLowerCase() === normEmail)
   );
 
-  const now = new Date().toISOString();
   let updatedUser: StoredUser;
-
   if (existingIdx >= 0) {
     updatedUser = {
       ...store.users[existingIdx],
@@ -310,35 +376,34 @@ export async function saveUser(userData: Partial<StoredUser>): Promise<StoredUse
   }
 
   writeLocalStore(store);
-
-  // Sync to MongoDB if connected
-  try {
-    const conn = await connectDB();
-    if (conn && conn.connection.readyState === 1 && normEmail) {
-      const doc = await User.findOneAndUpdate(
-        { email: normEmail },
-        {
-          name: updatedUser.name,
-          email: updatedUser.email,
-          ...(updatedUser.password ? { password: updatedUser.password } : {}),
-          homeAirport: updatedUser.homeAirport,
-          homeCity: updatedUser.homeCity,
-          country: updatedUser.country,
-          lat: updatedUser.lat,
-          lng: updatedUser.lng,
-        },
-        { upsert: true, new: true }
-      ).lean();
-      if (doc) return mapUserDoc(doc);
-    }
-  } catch (e) {
-    console.warn("saveUser MongoDB sync warning:", e);
-  }
-
   return updatedUser;
 }
 
-// ----------------- BOOKING HELPERS -----------------
+export async function deleteUser(idOrEmail: string): Promise<boolean> {
+  try {
+    const conn = await connectDB();
+    if (conn && conn.connection.readyState === 1) {
+      await User.deleteOne({
+        $or: [{ _id: idOrEmail }, { email: idOrEmail.toLowerCase() }],
+      });
+    }
+  } catch (e) {
+    console.warn("deleteUser MongoDB error:", e);
+  }
+
+  const store = readLocalStore();
+  const initialLen = store.users.length;
+  store.users = store.users.filter(
+    (u) => u.id !== idOrEmail && u.email.toLowerCase() !== idOrEmail.toLowerCase()
+  );
+  if (store.users.length !== initialLen) {
+    writeLocalStore(store);
+    return true;
+  }
+  return true;
+}
+
+// =---------------- BOOKING OPERATIONS ----------------=
 
 export async function findBookings(userCriteria: {
   userId?: string;
@@ -358,7 +423,9 @@ export async function findBookings(userCriteria: {
       const docs = await Booking.find(query).sort({ createdAt: -1 }).lean();
       return (docs || []).map(mapBookingDoc);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("findBookings MongoDB error, falling back to JSON DB:", e);
+  }
 
   const store = readLocalStore();
   return store.bookings.filter((b) => {
@@ -386,18 +453,18 @@ export async function findBookingById(id: string): Promise<StoredBooking | null>
           $or: [{ _id: id }, { bookingReference: id }, { eTicketNumber: id }],
         }).lean();
       }
-      return doc ? mapBookingDoc(doc) : null;
+      if (doc) return mapBookingDoc(doc);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("findBookingById MongoDB error, falling back to JSON DB:", e);
+  }
 
   const store = readLocalStore();
   return store.bookings.find((b) => b._id === id || b.bookingReference === id) || null;
 }
 
 export async function saveBooking(bookingData: Partial<StoredBooking>): Promise<StoredBooking> {
-  const store = readLocalStore();
   const now = new Date().toISOString();
-
   const id = bookingData._id || `bkg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
   const bookingRef =
     bookingData.bookingReference ||
@@ -442,29 +509,37 @@ export async function saveBooking(bookingData: Partial<StoredBooking>): Promise<
     updatedAt: now,
   };
 
-  const existingIdx = store.bookings.findIndex((b) => b._id === id);
-  if (existingIdx >= 0) {
-    store.bookings[existingIdx] = fieldsToSave;
-  } else {
-    store.bookings.unshift(fieldsToSave);
-  }
-  writeLocalStore(store);
-
-  // Sync to MongoDB if connected
+  // Try MongoDB FIRST
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _id, ...cleanFields } = fieldsToSave;
       const doc = await Booking.findOneAndUpdate(
         { bookingReference: bookingRef },
         { $set: cleanFields },
         { upsert: true, new: true }
       ).lean();
-      if (doc) return mapBookingDoc(doc);
+
+      if (doc) {
+        const mongoBooking = mapBookingDoc(doc);
+        syncBookingToLocalStore(mongoBooking);
+        return mongoBooking;
+      }
     }
   } catch (e) {
-    console.error("saveBooking MongoDB sync error:", e);
+    console.warn("saveBooking MongoDB error, falling back to JSON DB:", e);
   }
+
+  // Fallback to JSON DB
+  const store = readLocalStore();
+  const existingIdx = store.bookings.findIndex((b) => b._id === id || b.bookingReference === bookingRef);
+  if (existingIdx >= 0) {
+    store.bookings[existingIdx] = fieldsToSave;
+  } else {
+    store.bookings.unshift(fieldsToSave);
+  }
+  writeLocalStore(store);
 
   return fieldsToSave;
 }
@@ -474,16 +549,7 @@ export async function updateBookingStatus(
   status: "CONFIRMED" | "CANCELLED",
   escrowStatus: "CAPTURED" | "HELD" | "VOIDED"
 ): Promise<StoredBooking | null> {
-  const store = readLocalStore();
-  const idx = store.bookings.findIndex((b) => b._id === id || b.bookingReference === id);
-
-  if (idx >= 0) {
-    store.bookings[idx].status = status;
-    store.bookings[idx].escrowStatus = escrowStatus;
-    store.bookings[idx].updatedAt = new Date().toISOString();
-    writeLocalStore(store);
-  }
-
+  // Try MongoDB FIRST
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
@@ -492,14 +558,52 @@ export async function updateBookingStatus(
         { status, escrowStatus, updatedAt: new Date() },
         { new: true }
       ).lean();
-      if (doc) return mapBookingDoc(doc);
-    }
-  } catch (e) {}
 
-  return idx >= 0 ? store.bookings[idx] : null;
+      if (doc) {
+        const mongoBooking = mapBookingDoc(doc);
+        syncBookingToLocalStore(mongoBooking);
+        return mongoBooking;
+      }
+    }
+  } catch (e) {
+    console.warn("updateBookingStatus MongoDB error, falling back to JSON DB:", e);
+  }
+
+  // Fallback to JSON DB
+  const store = readLocalStore();
+  const idx = store.bookings.findIndex((b) => b._id === id || b.bookingReference === id);
+  if (idx >= 0) {
+    store.bookings[idx].status = status;
+    store.bookings[idx].escrowStatus = escrowStatus;
+    store.bookings[idx].updatedAt = new Date().toISOString();
+    writeLocalStore(store);
+    return store.bookings[idx];
+  }
+
+  return null;
 }
 
-// ----------------- GROUP BOOKING HELPERS -----------------
+export async function deleteBooking(idOrReference: string): Promise<boolean> {
+  try {
+    const conn = await connectDB();
+    if (conn && conn.connection.readyState === 1) {
+      await Booking.deleteOne({
+        $or: [{ _id: idOrReference }, { bookingReference: idOrReference }],
+      });
+    }
+  } catch (e) {
+    console.warn("deleteBooking MongoDB error:", e);
+  }
+
+  const store = readLocalStore();
+  store.bookings = store.bookings.filter(
+    (b) => b._id !== idOrReference && b.bookingReference !== idOrReference
+  );
+  writeLocalStore(store);
+  return true;
+}
+
+// =---------------- GROUP BOOKING OPERATIONS ----------------=
 
 export async function findGroupBookings(userCriteria: {
   userId?: string;
@@ -523,7 +627,9 @@ export async function findGroupBookings(userCriteria: {
       const docs = await GroupBooking.find(query).sort({ createdAt: -1 }).lean();
       return (docs || []).map(mapGroupBookingDoc);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("findGroupBookings MongoDB error, falling back to JSON DB:", e);
+  }
 
   const store = readLocalStore();
   return store.groupBookings.filter((gb) => {
@@ -552,11 +658,13 @@ export async function findGroupBookingById(idOrGroupId: string): Promise<StoredG
       try {
         doc = await GroupBooking.findOne({ groupId: idOrGroupId }).lean();
       } catch (e) {
-        console.warn("findGroupBookingById MongoDB error:", e);
+        console.warn("findGroupBookingById MongoDB query error:", e);
       }
       if (doc) return mapGroupBookingDoc(doc);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("findGroupBookingById MongoDB error, falling back to JSON DB:", e);
+  }
 
   const store = readLocalStore();
   return (
@@ -569,17 +677,11 @@ export async function findGroupBookingById(idOrGroupId: string): Promise<StoredG
 export async function saveGroupBooking(
   groupData: Partial<StoredGroupBooking>
 ): Promise<StoredGroupBooking> {
-  const store = readLocalStore();
   const now = new Date().toISOString();
-
   const groupId =
     groupData.groupId ||
     `grp-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
   const id = groupData._id || groupId;
-
-  const existingIdx = store.groupBookings.findIndex(
-    (gb) => gb.groupId === groupId || gb._id === id
-  );
 
   const merged: StoredGroupBooking = {
     _id: id,
@@ -595,18 +697,11 @@ export async function saveGroupBooking(
     members: groupData.members || [],
     totalPrice: groupData.totalPrice || 0,
     optimizationMetrics: groupData.optimizationMetrics,
-    createdAt: (existingIdx >= 0 ? store.groupBookings[existingIdx].createdAt : null) || now,
+    createdAt: groupData.createdAt || now,
     updatedAt: now,
   };
 
-  if (existingIdx >= 0) {
-    store.groupBookings[existingIdx] = merged;
-  } else {
-    store.groupBookings.unshift(merged);
-  }
-  writeLocalStore(store);
-
-  // Sync to MongoDB if connected
+  // Try MongoDB FIRST
   try {
     const conn = await connectDB();
     if (conn && conn.connection.readyState === 1) {
@@ -617,11 +712,46 @@ export async function saveGroupBooking(
         { $set: mergedWithoutId },
         { upsert: true, new: true }
       ).lean();
-      if (doc) return mapGroupBookingDoc(doc);
+
+      if (doc) {
+        const mongoGroup = mapGroupBookingDoc(doc);
+        syncGroupBookingToLocalStore(mongoGroup);
+        return mongoGroup;
+      }
     }
   } catch (e) {
-    console.warn("saveGroupBooking MongoDB sync warning:", e);
+    console.warn("saveGroupBooking MongoDB error, falling back to JSON DB:", e);
   }
 
+  // Fallback to JSON DB
+  const store = readLocalStore();
+  const existingIdx = store.groupBookings.findIndex(
+    (gb) => gb.groupId === groupId || gb._id === id
+  );
+  if (existingIdx >= 0) {
+    store.groupBookings[existingIdx] = merged;
+  } else {
+    store.groupBookings.unshift(merged);
+  }
+  writeLocalStore(store);
+
   return merged;
+}
+
+export async function deleteGroupBooking(groupId: string): Promise<boolean> {
+  try {
+    const conn = await connectDB();
+    if (conn && conn.connection.readyState === 1) {
+      await GroupBooking.deleteOne({ groupId });
+    }
+  } catch (e) {
+    console.warn("deleteGroupBooking MongoDB error:", e);
+  }
+
+  const store = readLocalStore();
+  store.groupBookings = store.groupBookings.filter(
+    (gb) => gb.groupId !== groupId && gb._id !== groupId
+  );
+  writeLocalStore(store);
+  return true;
 }
